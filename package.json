@@ -1,6 +1,6 @@
 {
   "name": "@frontendnetwork/vegancheck",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A wrapper for VeganCheck.me API",
   "main": "dist/index.js",
   "scripts": {
@@ -27,8 +27,7 @@
     "lib/*.*"
   ],
   "publishConfig": {
-    "access": "public",
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "devDependencies": {
     "@types/jest": "^29.5.1",
