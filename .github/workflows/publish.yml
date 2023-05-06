@@ -5,6 +5,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: 
+      name: npm registry
+      url: https://www.npmjs.com/package/@frontendnetwork/vegancheck
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3

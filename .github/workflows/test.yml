@@ -6,6 +6,9 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        environment: 
+            name: latest commit (tests succeeded)
+            url: https://github.com/JokeNetwork/vegancheck-api-wrapper
 
         steps:
           - uses: actions/checkout@v3
