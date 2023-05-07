@@ -20,6 +20,10 @@ jobs:
       - name: Install deps & build
         run: npm ci && npm run build
       - name: Publish package on NPM
-        run: npm publish && npm config set //npm.pkg.github.com/:_authToken ${{ secrets.GH_KEY }} && npm publish
+        run: |
+          npm publish 
+          npm config set registry https://npm.pkg.github.com
+          npm config set //npm.pkg.github.com/:_authToken ${{ secrets.GH_KEY }}
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
