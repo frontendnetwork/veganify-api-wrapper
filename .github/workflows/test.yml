@@ -7,7 +7,7 @@ jobs:
     build:
         runs-on: ubuntu-latest
         environment: 
-            name: latest commit (tests succeeded)
+            name: commit tests
             url: https://github.com/JokeNetwork/vegancheck-api-wrapper
 
         steps:
