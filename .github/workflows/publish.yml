@@ -56,5 +56,5 @@ jobs:
         run: |
           PACKAGE_VERSION=$(npm view @frontendnetwork/vegancheck version)
           echo "Latest version of the package is: $PACKAGE_VERSION"
-          echo "::set-output name=package-version::$PACKAGE_VERSION"
-          npm install @frontendnetwork/vegancheck@${{ steps.get-version.outputs.package-version }}
+          echo "package-version=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          npm install @frontendnetwork/vegancheck@${{ env.package-version }}
