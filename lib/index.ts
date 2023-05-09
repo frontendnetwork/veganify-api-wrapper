@@ -1,7 +1,7 @@
 const API_BASE_URL = 'https://api.vegancheck.me/v0';
 
 const VeganCheck = {
-  getProductByBarcode: async (barcode) => {
+  getProductByBarcode: async (barcode: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/product/${barcode}`, {
         method: 'POST',
@@ -17,7 +17,7 @@ const VeganCheck = {
     }
   },
 
-  checkIngredientsList: async (ingredientsList) => {
+  checkIngredientsList: async (ingredientsList: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/ingredients/${ingredientsList}`);
 
