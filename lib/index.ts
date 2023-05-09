@@ -1,12 +1,17 @@
-import axios from 'axios';
-
 const API_BASE_URL = 'https://api.vegancheck.me/v0';
 
 const VeganCheck = {
   getProductByBarcode: async (barcode) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/product/${barcode}`);
-      return response.data;
+      const response = await fetch(`${API_BASE_URL}/product/${barcode}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw { response: { status: response.status } };
+      }
+
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -14,8 +19,13 @@ const VeganCheck = {
 
   checkIngredientsList: async (ingredientsList) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/ingredients/${ingredientsList}`);
-      return response.data;
+      const response = await fetch(`${API_BASE_URL}/ingredients/${ingredientsList}`);
+
+      if (!response.ok) {
+        throw { response: { status: response.status } };
+      }
+
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -23,8 +33,13 @@ const VeganCheck = {
 
   getPetaCrueltyFreeBrands: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/peta/crueltyfree`);
-      return response.data;
+      const response = await fetch(`${API_BASE_URL}/peta/crueltyfree`);
+
+      if (!response.ok) {
+        throw { response: { status: response.status } };
+      }
+
+      return await response.json();
     } catch (error) {
       throw error;
     }
