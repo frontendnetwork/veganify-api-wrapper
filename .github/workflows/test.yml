@@ -19,13 +19,15 @@ jobs:
         with:
           node-version: 'latest'
 
-      - run: npm ci
-
-      - name: Archive node_modules
-        uses: actions/upload-artifact@v2
+      - name: Cache node modules
+        uses: actions/cache@v3
         with:
-          name: node_modules
-          path: node_modules
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm ci
 
   test:
     needs: install
@@ -38,9 +40,13 @@ jobs:
         with:
           node-version: 'latest'
 
-      - name: Download node_modules
-        uses: actions/download-artifact@v2
+      - name: Cache node modules
+        uses: actions/cache@v3
         with:
-          name: node_modules
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
+      - run: npm ci
       - run: npm test
