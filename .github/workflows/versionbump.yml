@@ -19,11 +19,22 @@ jobs:
           node-version: 'latest'
 
       - name: Bump version and push tag
+        id: bump_version
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          npm version patch -m "feat(Version): Bump to %s [skip versioning]"
+          VERSION_TAG=$(npm version patch -m "feat(Version): Bump to %s [skip versioning]")
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
+          echo "::set-output name=version::$VERSION_TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        with:
+          tag_name: ${{ steps.bump_version.outputs.version }}
+          release_name: ${{ steps.bump_version.outputs.version }}
