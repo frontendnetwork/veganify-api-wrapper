@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    if: "!contains(github.event.head_commit.message, 'skip versioning')"
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +22,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          npm version patch -m "feat(Version): Bump to %s [skip ci]"
+          npm version patch -m "feat(Version): Bump to %s [skip versioning]"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push
         env:
