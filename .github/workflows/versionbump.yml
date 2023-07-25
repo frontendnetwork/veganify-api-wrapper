@@ -38,3 +38,75 @@ jobs:
         with:
           tag_name: ${{ env.VERSION_TAG }}
           release_name: Release ${{ env.VERSION_TAG }}
+          
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - run: npx changelogithub # or changelogithub@0.12 if ensure the stable result
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19.x'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+  build-publish:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: 
+      name: npm registry
+      url: https://www.npmjs.com/package/@frontendnetwork/vegancheck
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19.x'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install dependencies & build
+        run: npm ci && npm run build
+      - name: Publish package on NPM
+        run: |
+          npm publish 
+          npm config set registry https://npm.pkg.github.com
+          npm config set //npm.pkg.github.com/:_authToken ${{ secrets.GH_KEY }}
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  verify-install:
+    needs: build-publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19.x'
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify package installation
+        run: |
+          PACKAGE_VERSION=$(npm view @frontendnetwork/vegancheck version)
+          echo "Latest version of the package is: $PACKAGE_VERSION"
+          echo "package-version=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          npm install @frontendnetwork/vegancheck@${{ env.package-version }}
+    
