@@ -37,22 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
           tag_name: ${{ env.VERSION_TAG }}
-          release_name: Release ${{ env.VERSION_TAG }}
-          
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-
-      - run: npx changelogithub # or changelogithub@0.12 if ensure the stable result
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          release_name: ${{ env.VERSION_TAG }}
   
   test:
     runs-on: ubuntu-latest
