@@ -1,8 +1,14 @@
-const API_BASE_URL = 'https://api.vegancheck.me/v0';
+const PRODUCTION_API_BASE_URL = 'https://api.vegancheck.me/v0';
+const STAGING_API_BASE_URL = 'https://staging.api.vegancheck.me/v0';
+
+const getApiBaseUrl = (staging?: boolean): string => {
+  return staging ? STAGING_API_BASE_URL : PRODUCTION_API_BASE_URL;
+};
 
 const VeganCheck = {
-  getProductByBarcode: async (barcode: string) => {
+  getProductByBarcode: async (barcode: string, staging?: boolean) => {
     try {
+      const API_BASE_URL = getApiBaseUrl(staging);
       const response = await fetch(`${API_BASE_URL}/product/${barcode}`, {
         method: 'POST',
       });
@@ -17,8 +23,9 @@ const VeganCheck = {
     }
   },
 
-  checkIngredientsList: async (ingredientsList: string) => {
+  checkIngredientsList: async (ingredientsList: string, staging?: boolean) => {
     try {
+      const API_BASE_URL = getApiBaseUrl(staging);
       const response = await fetch(`${API_BASE_URL}/ingredients/${ingredientsList}`);
 
       if (!response.ok) {
@@ -31,8 +38,9 @@ const VeganCheck = {
     }
   },
 
-  getPetaCrueltyFreeBrands: async () => {
+  getPetaCrueltyFreeBrands: async (staging?: boolean) => {
     try {
+      const API_BASE_URL = getApiBaseUrl(staging);
       const response = await fetch(`${API_BASE_URL}/peta/crueltyfree`);
 
       if (!response.ok) {
