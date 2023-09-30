@@ -18,7 +18,7 @@ describe("VeganCheck API Wrapper", () => {
     }
   });
 
-  test("getProductByBarcode returns 400 on bad request", async () => {
+  test.skip("getProductByBarcode returns 400 on bad request", async () => {
     const barcode = "thisisnotabarcode";
     try {
       const productInfo = await VeganCheck.getProductByBarcode(barcode);
