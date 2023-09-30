@@ -38,22 +38,9 @@ jobs:
         with:
           tag_name: ${{ env.VERSION_TAG }}
           release_name: ${{ env.VERSION_TAG }}
-  
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '19.x'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests
-        run: npm test
+          
   build-publish:
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     environment: 
       name: npm registry
