@@ -34,7 +34,7 @@ describe("VeganCheck API Wrapper", () => {
       ingredientsList
     );
     expect(ingredientsInfo).toBeDefined();
-    expect(ingredientsInfo.data.vegan).toBe("true");
+    expect(ingredientsInfo.data.vegan).toBe(true);
   });
 
   test("checkIngredientsList returns information about ingredients (non-vegan)", async () => {
@@ -43,7 +43,7 @@ describe("VeganCheck API Wrapper", () => {
       ingredientsList
     );
     expect(ingredientsInfo).toBeDefined();
-    expect(ingredientsInfo.data.vegan).toBe("false");
+    expect(ingredientsInfo.data.vegan).toBe(false);
     expect(ingredientsInfo.data.flagged).toContain("duck");
   });
 
