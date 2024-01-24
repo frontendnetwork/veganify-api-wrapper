@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: commit tests
-      url: https://github.com/JokeNetwork/vegancheck-api-wrapper
+      url: https://github.com/JokeNetwork/veganify-api-wrapper
 
     steps:
       - uses: actions/checkout@v3

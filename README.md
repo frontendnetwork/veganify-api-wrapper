@@ -1,9 +1,9 @@
 <div align="center">
-<img src="https://user-images.githubusercontent.com/4144601/221289921-b5437f01-7b5c-415a-afd5-d49b926a9217.svg" alt="VeganCheck API logo" width="128">
+<img src="https://user-images.githubusercontent.com/4144601/221289921-b5437f01-7b5c-415a-afd5-d49b926a9217.svg" alt="Veganify API logo" width="128">
 
-# VeganCheck.me API Wrapper
+# Veganify API Wrapper
 
-A wrapper for the official [VeganCheck.me API](https://github.com/JokeNetwork/VeganCheck.me-API) for React, Vue and Vanilla JavaScript.
+A wrapper for the official [Veganify API](https://github.com/JokeNetwork/Veganify-API) for React, Vue and Vanilla JavaScript.
 
 <br />
 
@@ -18,7 +18,7 @@ A wrapper for the official [VeganCheck.me API](https://github.com/JokeNetwork/Ve
 Install the API Wrapper with npm or yarn:
 
 ```bash
-npm install @frontendnetwork/vegancheck
+npm install @frontendnetwork/veganify
 ```
 
 ### Initialization
@@ -27,13 +27,13 @@ You can use this library in TypeScript and JavaScript.
 Import it with:
 
 ```typescript
-import VeganCheck from "@frontendnetwork/vegancheck";
+import Veganify from "@frontendnetwork/veganify";
 ```
 
 and then initialize it with one of its [functions](#functions).
 
 ### Error Handling
-Please refer to the [VeganCheck.me API Documentation](https://jokenetwork.de/vegancheck-api) for all error codes.
+Please refer to the [Veganify API Documentation](https://jokenetwork.de/veganify-api) for all error codes.
 
 ## Functions
 
@@ -59,7 +59,7 @@ Please refer to the [VeganCheck.me API Documentation](https://jokenetwork.de/veg
 ### React
 
 ```typescript
-import VeganCheck from "@frontendnetwork/vegancheck";
+import Veganify from "@frontendnetwork/veganify";
 import React, { useState } from "react";
 
 const ExampleComponent = () => {
@@ -70,7 +70,7 @@ const ExampleComponent = () => {
     e.preventDefault();
 
     try {
-      const productData = await VeganCheck.getProductByBarcode(barcode);
+      const productData = await Veganify.getProductByBarcode(barcode);
       setProductInfo(productData);
     } catch (error) {
       console.error(error);
@@ -119,7 +119,7 @@ export default ExampleComponent;
 
 <script>
 import { ref } from "vue";
-import VeganCheck from "@frontendnetwork/vegancheck";
+import Veganify from "@frontendnetwork/veganify";
 
 export default {
   setup() {
@@ -128,7 +128,7 @@ export default {
 
     const handleBarcodeSubmit = async () => {
       try {
-        const productData = await VeganCheck.getProductByBarcode(barcode.value);
+        const productData = await Veganify.getProductByBarcode(barcode.value);
         productInfo.value = productData;
       } catch (error) {
         console.error(error);
@@ -158,7 +158,7 @@ You will need a bundler like [Webpack](https://webpack.js.org) or [Parcel](https
 </div>
 
 <script type="module">
-  import VeganCheck from "@frontendnetwork/vegancheck";
+  import Veganify from "@frontendnetwork/veganify";
 
   document.getElementById("product-info").style.display = "none";
 
@@ -171,7 +171,7 @@ You will need a bundler like [Webpack](https://webpack.js.org) or [Parcel](https
       const barcode = barcodeInput.value;
 
       try {
-        const productData = await VeganCheck.getProductByBarcode(barcode);
+        const productData = await Veganify.getProductByBarcode(barcode);
         document.getElementById("product-data").textContent = JSON.stringify(
           productData,
           null,

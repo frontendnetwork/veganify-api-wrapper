@@ -1,7 +1,7 @@
 {
-  "name": "@frontendnetwork/vegancheck",
+  "name": "@frontendnetwork/veganify",
   "version": "1.1.48",
-  "description": "A wrapper for the official VeganCheck.me API",
+  "description": "A wrapper for the official Veganify API",
   "main": "dist/index.js",
   "scripts": {
     "build": "node build.js",
@@ -10,20 +10,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JokeNetwork/vegancheck-api-wrapper.git"
+    "url": "https://github.com/JokeNetwork/veganify-api-wrapper.git"
   },
   "keywords": [
     "API",
     "Vegan",
-    "VeganCheck",
+    "Veganify",
     "React"
   ],
   "author": "FrontEndNet.work, Philip Brembeck",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/JokeNetwork/vegancheck-api-wrapper/issues"
+    "url": "https://github.com/JokeNetwork/veganify-api-wrapper/issues"
   },
-  "homepage": "https://github.com/JokeNetwork/vegancheck-api-wrapper#readme",
+  "homepage": "https://github.com/JokeNetwork/veganify-api-wrapper#readme",
   "eslintIgnore": [
     "lib/*.*"
   ],

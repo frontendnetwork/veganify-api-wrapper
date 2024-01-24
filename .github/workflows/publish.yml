@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: 
       name: npm registry
-      url: https://www.npmjs.com/package/@frontendnetwork/vegancheck
+      url: https://www.npmjs.com/package/@frontendnetwork/veganify
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -52,7 +52,7 @@ jobs:
         run: npm ci
       - name: Verify package installation
         run: |
-          PACKAGE_VERSION=$(npm view @frontendnetwork/vegancheck version)
+          PACKAGE_VERSION=$(npm view @frontendnetwork/veganify version)
           echo "Latest version of the package is: $PACKAGE_VERSION"
           echo "package-version=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-          npm install @frontendnetwork/vegancheck@${{ env.package-version }}
+          npm install @frontendnetwork/veganify@${{ env.package-version }}
