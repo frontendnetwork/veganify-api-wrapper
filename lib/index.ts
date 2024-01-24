@@ -4,14 +4,14 @@ import {
   PetaCrueltyFreeResponse,
 } from "./interfaces";
 
-const PRODUCTION_API_BASE_URL = "https://api.vegancheck.me/v0";
-const STAGING_API_BASE_URL = "https://staging.api.vegancheck.me/v0";
+const PRODUCTION_API_BASE_URL = "https://api.veganify.app/v0";
+const STAGING_API_BASE_URL = "https://staging.api.veganify.app/v0";
 
 const getApiBaseUrl = (staging?: boolean): string => {
   return staging ? STAGING_API_BASE_URL : PRODUCTION_API_BASE_URL;
 };
 
-const VeganCheck = {
+const Veganify = {
   getProductByBarcode: async (
     barcode: string,
     staging?: boolean
@@ -70,4 +70,4 @@ const VeganCheck = {
   },
 };
 
-export default VeganCheck;
+export default Veganify;
