@@ -2,6 +2,7 @@ import {
   ProductResponse,
   IngredientsCheckResponse,
   PetaCrueltyFreeResponse,
+  ErrorResponse,
 } from "./interfaces";
 
 const PRODUCTION_API_BASE_URL = "https://api.veganify.app/v0";
@@ -15,7 +16,7 @@ const Veganify = {
   getProductByBarcode: async (
     barcode: string,
     staging?: boolean
-  ): Promise<ProductResponse> => {
+  ): Promise<ProductResponse | ErrorResponse> => {
     try {
       const API_BASE_URL = getApiBaseUrl(staging);
       const response = await fetch(`${API_BASE_URL}/product/${barcode}`, {
