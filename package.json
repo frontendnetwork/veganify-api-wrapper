@@ -1,11 +1,12 @@
 {
   "name": "@frontendnetwork/veganify",
-  "version": "1.1.65",
+  "version": "1.2.0",
   "description": "A wrapper for the official Veganify API",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "node build.js",
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint"
   },
   "repository": {
@@ -39,5 +40,8 @@
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
     "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
   }
 }

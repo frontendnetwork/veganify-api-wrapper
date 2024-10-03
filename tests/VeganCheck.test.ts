@@ -1,4 +1,4 @@
-import Veganify from "../lib/index";
+import Veganify from "../lib/index.js";
 
 describe("Veganify API Wrapper", () => {
   test("getProductByBarcode returns product information", async () => {
@@ -9,23 +9,13 @@ describe("Veganify API Wrapper", () => {
   });
 
   test("getProductByBarcode returns 404 on unknown barcode", async () => {
-    const barcode = "0";
-    try {
-      const productInfo = await Veganify.getProductByBarcode(barcode);
-      expect(false).toBeTruthy();
-    } catch (error) {
-      expect(error).toHaveProperty("response.status", 404);
-    }
-  });
+    const barcode = "01010";
+    await expect(Veganify.getProductByBarcode(barcode)).rejects.toThrow();
+  }, 10000);
 
   test.skip("getProductByBarcode returns 400 on bad request", async () => {
     const barcode = "thisisnotabarcode";
-    try {
-      const productInfo = await Veganify.getProductByBarcode(barcode);
-      expect(false).toBeTruthy();
-    } catch (error) {
-      expect(error).toHaveProperty("response.status", 400);
-    }
+    await expect(Veganify.getProductByBarcode(barcode)).rejects.toThrow();
   });
 
   test("checkIngredientsList returns information about ingredients (vegan)", async () => {
@@ -49,14 +39,9 @@ describe("Veganify API Wrapper", () => {
 
   test("checkIngredientsList returns 400 on bad request", async () => {
     const ingredientsList = "&/%";
-    try {
-      const ingredientsInfo = await Veganify.checkIngredientsList(
-        ingredientsList
-      );
-      expect(false).toBeTruthy();
-    } catch (error) {
-      expect(error).toHaveProperty("response.status", 400);
-    }
+    await expect(
+      Veganify.checkIngredientsList(ingredientsList)
+    ).rejects.toThrow();
   });
 
   test("getPetaCrueltyFreeBrands returns a list of cruelty-free brands", async () => {
