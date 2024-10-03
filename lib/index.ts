@@ -23,7 +23,7 @@ const Veganify = {
       method: "POST",
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw { response: { status: response.status } };
     }
     return (await response.json()) as ProductResponse | ErrorResponse;
   },
@@ -37,7 +37,7 @@ const Veganify = {
       `${API_BASE_URL}/ingredients/${ingredientsList}`
     );
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw { response: { status: response.status } };
     }
     return (await response.json()) as IngredientsCheckResponse;
   },
@@ -48,7 +48,7 @@ const Veganify = {
     const API_BASE_URL = getApiBaseUrl(staging);
     const response = await fetch(`${API_BASE_URL}/peta/crueltyfree`);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw { response: { status: response.status } };
     }
     return (await response.json()) as PetaCrueltyFreeResponse;
   },
