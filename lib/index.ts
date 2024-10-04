@@ -27,7 +27,6 @@ const Veganify = {
     }
     return (await response.json()) as ProductResponse | ErrorResponse;
   },
-
   checkIngredientsList: async (
     ingredientsList: string,
     staging?: boolean
@@ -41,7 +40,6 @@ const Veganify = {
     }
     return (await response.json()) as IngredientsCheckResponse;
   },
-
   getPetaCrueltyFreeBrands: async (
     staging?: boolean
   ): Promise<PetaCrueltyFreeResponse> => {
@@ -55,3 +53,9 @@ const Veganify = {
 };
 
 export default Veganify;
+export {
+  ProductResponse,
+  IngredientsCheckResponse,
+  PetaCrueltyFreeResponse,
+  ErrorResponse,
+};
