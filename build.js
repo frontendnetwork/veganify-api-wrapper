@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +20,7 @@ try {
 
     fs.readdirSync(sourceDir).forEach(file => {
         if (!file.endsWith('.ts')) {
-            fs.copyFileSync(`${sourceDir}/${file}`, `${targetDir}/${file}`);
+            fs.copyFileSync(join(sourceDir, file), join(targetDir, file));
         }
     });
 

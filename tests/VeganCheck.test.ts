@@ -10,7 +10,7 @@ describe("Veganify API Wrapper", () => {
     });
 
     test("returns 404 on unknown barcode", async () => {
-      const barcode = "01010";
+      const barcode = "0101010101010";
       await expect(Veganify.getProductByBarcode(barcode)).rejects.toEqual({
         response: { status: 404 },
       });
