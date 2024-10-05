@@ -35,7 +35,9 @@ export interface IngredientsCheckResponse {
 
 export interface DataDetails {
   vegan: boolean;
-  flagged?: string[];
+  surely_vegan: string[];
+  not_vegan: string[];
+  maybe_vegan: string[];
 }
 
 export interface PetaCrueltyFreeResponse {
