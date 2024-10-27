@@ -11,108 +11,160 @@ A wrapper for the official [Veganify API](https://github.com/JokeNetwork/Veganif
 
 </div>
 
-## Documentation
+## Table of Contents
 
-### Installation
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [API Reference](#api-reference)
+- [Example Usage](#example-usage)
+- [Error Handling](#error-handling)
+- [TypeScript Support](#typescript-support)
 
-Install the API Wrapper with npm or yarn:
+## Installation
+
+Install the package using npm:
 
 ```bash
 npm install @frontendnetwork/veganify
 ```
 
-### Initialization
+Or using yarn:
 
-You can use this library in TypeScript and JavaScript.
-Import it with:
+```bash
+yarn add @frontendnetwork/veganify
+```
+
+## Getting Started
+
+Import the package in your project:
 
 ```typescript
 import Veganify from "@frontendnetwork/veganify";
 ```
 
-and then initialize it with one of its [functions](#functions).
+## API Reference
 
-### Error Handling
-Please refer to the [Veganify API Documentation](https://jokenetwork.de/veganify-api) for all error codes.
+### Product Information
 
-## Functions
+#### `getProductByBarcode(barcode: string): Promise<ProductResponse>`
 
-- **`getProductByBarcode`**: Gives out information about a product by its barcode.
+Retrieves product information using a barcode.
 
-  ```typescript
-  getProductByBarcode(barcode);
-  ```
+```typescript
+const product = await Veganify.getProductByBarcode("4066600204404");
+```
 
-- **`checkIngredientsList`**: Checks ingredients. Ingredients have to be comma-seperated.
+Response includes:
 
-  ```typescript
-  checkIngredientsList(ingredientsList);
-  ```
+- Product name
+- Vegan status
+- Vegetarian status
+- Animal testing status
+- Palm oil status
+- Nutriscore (if available)
 
-- **`getPetaCrueltyFreeBrands`**: Gives out a list of cruelty free brands.
-  ```typescript
-  getPetaCrueltyFreeBrands();
-  ```
+### Ingredients Analysis
 
-## Example usage
+#### `checkIngredientsListV1(ingredientsList: string): Promise<IngredientsCheckResponseV1>`
 
-### React
+Analyzes a comma-separated list of ingredients to determine if they are vegan.
+
+```typescript
+const result = await Veganify.checkIngredientsListV1("water,sugar,milk");
+```
+
+Response categories:
+
+- Surely vegan ingredients
+- Non-vegan ingredients
+- Maybe not vegan ingredients
+- Unknown ingredients
+- Overall vegan status
+
+#### `checkIngredientsList(ingredientsList: string): Promise<IngredientsCheckResponse>`
+
+⚠️ **Deprecated**: Please use `checkIngredientsListV1` instead.
+
+### PETA Cruelty-Free Brands
+
+#### `getPetaCrueltyFreeBrands(): Promise<PetaCrueltyFreeResponse>`
+
+Returns a list of PETA-certified cruelty-free brands.
+
+```typescript
+const brands = await Veganify.getPetaCrueltyFreeBrands();
+```
+
+## Example Usage
+
+### React Example
 
 ```typescript
 import Veganify from "@frontendnetwork/veganify";
-import React, { useState } from "react";
+import { useState } from "react";
 
-const ExampleComponent = () => {
-  const [barcode, setBarcode] = useState("");
-  const [productInfo, setProductInfo] = useState(null);
+const IngredientsChecker = () => {
+  const [ingredients, setIngredients] = useState("");
+  const [result, setResult] = useState(null);
 
-  const handleBarcodeSubmit = async (e) => {
+  const handleCheck = async (e) => {
     e.preventDefault();
-
     try {
-      const productData = await Veganify.getProductByBarcode(barcode);
-      setProductInfo(productData);
+      const analysis = await Veganify.checkIngredientsListV1(ingredients);
+      setResult(analysis);
     } catch (error) {
-      console.error(error);
+      console.error("Error checking ingredients:", error);
     }
   };
 
   return (
     <div>
-      <form onSubmit={handleBarcodeSubmit}>
+      <form onSubmit={handleCheck}>
         <input
           type="text"
-          value={barcode}
-          onChange={(e) => setBarcode(e.target.value)}
-          placeholder="Enter barcode"
+          value={ingredients}
+          onChange={(e) => setIngredients(e.target.value)}
+          placeholder="Enter ingredients (comma-separated)"
         />
-        <button type="submit">Submit</button>
+        <button type="submit">Check Ingredients</button>
       </form>
-      {productInfo && (
+      {result && (
         <div>
-          <h2>Product Information</h2>
-          <pre>{JSON.stringify(productInfo, null, 2)}</pre>
+          <h3>Results:</h3>
+          <p>Vegan: {result.data.vegan ? "Yes" : "No"}</p>
+          {result.data.not_vegan.length > 0 && (
+            <p>Non-vegan ingredients: {result.data.not_vegan.join(", ")}</p>
+          )}
+          {result.data.maybe_not_vegan.length > 0 && (
+            <p>
+              Potentially non-vegan: {result.data.maybe_not_vegan.join(", ")}
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 };
-
-export default ExampleComponent;
 ```
 
-### Vue
+### Vue Example
 
 ```vue
 <template>
   <div>
-    <form @submit.prevent="handleBarcodeSubmit">
-      <input type="text" v-model="barcode" placeholder="Enter barcode" />
-      <button type="submit">Submit</button>
+    <form @submit.prevent="checkIngredients">
+      <input
+        v-model="ingredients"
+        placeholder="Enter ingredients (comma-separated)"
+      />
+      <button type="submit">Check</button>
     </form>
-    <div v-if="productInfo">
-      <h2>Product Information</h2>
-      <pre>{{ productInfo }}</pre>
+    <div v-if="result">
+      <h3>Analysis Result:</h3>
+      <p>Vegan Status: {{ result.data.vegan ? "Vegan" : "Not Vegan" }}</p>
+      <p v-if="result.data.not_vegan.length">
+        Non-vegan ingredients: {{ result.data.not_vegan.join(", ") }}
+      </p>
     </div>
   </div>
 </template>
@@ -123,64 +175,41 @@ import Veganify from "@frontendnetwork/veganify";
 
 export default {
   setup() {
-    const barcode = ref("");
-    const productInfo = ref(null);
+    const ingredients = ref("");
+    const result = ref(null);
 
-    const handleBarcodeSubmit = async () => {
+    const checkIngredients = async () => {
       try {
-        const productData = await Veganify.getProductByBarcode(barcode.value);
-        productInfo.value = productData;
+        result.value = await Veganify.checkIngredientsListV1(ingredients.value);
       } catch (error) {
         console.error(error);
       }
     };
 
-    return { barcode, productInfo, handleBarcodeSubmit };
+    return { ingredients, result, checkIngredients };
   },
 };
 </script>
 ```
 
-### Vanilla JavaScript
+## Error Handling
 
-You will need a bundler like [Webpack](https://webpack.js.org) or [Parcel](https://parceljs.org) to be able to use ES6 import in the browser.
+The API wrapper throws errors with HTTP status codes for different scenarios:
 
-```html
-<div>
-  <form id="barcode-form">
-    <input type="text" id="barcode-input" placeholder="Enter barcode" />
-    <button type="submit">Submit</button>
-  </form>
-  <div id="product-info">
-    <h2>Product Information</h2>
-    <pre id="product-data"></pre>
-  </div>
-</div>
-
-<script type="module">
-  import Veganify from "@frontendnetwork/veganify";
-
-  document.getElementById("product-info").style.display = "none";
-
-  document
-    .getElementById("barcode-form")
-    .addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const barcodeInput = document.getElementById("barcode-input");
-      const barcode = barcodeInput.value;
-
-      try {
-        const productData = await Veganify.getProductByBarcode(barcode);
-        document.getElementById("product-data").textContent = JSON.stringify(
-          productData,
-          null,
-          2
-        );
-        document.getElementById("product-info").style.display = "block";
-      } catch (error) {
-        console.error(error);
-      }
-    });
-</script>
+```typescript
+try {
+  const result = await Veganify.checkIngredientsListV1("invalid,ingredients");
+} catch (error) {
+  if (error.response?.status === 400) {
+    console.error("Bad request - invalid ingredients format");
+  } else if (error.response?.status === 404) {
+    console.error("Not found");
+  }
+}
 ```
+
+For detailed error codes and their meanings, see the [Veganify API Documentation](https://frontendnet.work/veganify-api).
+
+## TypeScript Support
+
+This package includes TypeScript definitions. For the Interfaces, please see the [source code](https://github.com/frontendnetwork/veganify-api-wrapper/blob/main/lib/interfaces.ts).

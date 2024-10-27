@@ -33,6 +33,21 @@ export interface IngredientsCheckResponse {
   data: DataDetails;
 }
 
+export interface IngredientsCheckResponseV1 {
+  code: string;
+  status: string;
+  message: string;
+  data: DataDetailsV1;
+}
+
+export interface DataDetailsV1 {
+  vegan: boolean;
+  surely_vegan: string[];
+  not_vegan: string[];
+  maybe_not_vegan: string[];
+  unknown: string[];
+}
+
 export interface DataDetails {
   vegan: boolean;
   surely_vegan: string[];
