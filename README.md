@@ -1,45 +1,75 @@
 <div align="center">
 <img src="https://user-images.githubusercontent.com/4144601/221289921-b5437f01-7b5c-415a-afd5-d49b926a9217.svg" alt="Veganify API logo" width="128">
 
-# Veganify API Wrapper
+# Veganify API Wrapper 2.0
 
-A wrapper for the official [Veganify API](https://github.com/JokeNetwork/Veganify-API) for React, Vue and Vanilla JavaScript.
+A modern, type-safe wrapper for the official [Veganify API](https://github.com/frontendnetwork/Veganify-API) with built-in validation, caching, and comprehensive error handling.
 
-<br />
-
-![hero](https://user-images.githubusercontent.com/4144601/236630872-f6da37d3-386a-45bd-8011-9be2cb96928c.png)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![Testing](https://img.shields.io/badge/tested_with-jest-green.svg?style=for-the-badge)
+![NPM Version](https://img.shields.io/npm/v/@frontendnetwork/veganify.svg?style=for-the-badge)
 
 </div>
 
-## Table of Contents
+## Features
 
-- [Installation](#installation)
-- [Getting Started](#getting-started)
-- [API Reference](#api-reference)
-- [Example Usage](#example-usage)
-- [Error Handling](#error-handling)
-- [TypeScript Support](#typescript-support)
+- 🎯 **Type Safety**: Full TypeScript support with Zod validation
+- 🚀 **Performance**: Built-in caching system
+- 🛡️ **Robust Error Handling**: Custom error types for different scenarios
+- ⚡ **Framework Agnostic**: Works with any JavaScript framework
+- 🔄 **Modern Architecture**: Singleton pattern with configurable instances
 
 ## Installation
 
-Install the package using npm:
+You can install the package via npm, yarn, or pnpm, bun, etc.:
 
 ```bash
+# Using npm
 npm install @frontendnetwork/veganify
-```
 
-Or using yarn:
-
-```bash
+# Using yarn
 yarn add @frontendnetwork/veganify
+
+# Using pnpm
+pnpm add @frontendnetwork/veganify
 ```
 
-## Getting Started
-
-Import the package in your project:
+## Quick Start
 
 ```typescript
 import Veganify from "@frontendnetwork/veganify";
+
+// Get an instance with default configuration
+const veganify = Veganify.getInstance();
+
+// Example: Check if ingredients are vegan
+async function checkIngredients() {
+  try {
+    const result = await veganify.checkIngredientsListV1("water, sugar, milk");
+    console.log("Is vegan:", result.data.vegan);
+    console.log("Non-vegan ingredients:", result.data.not_vegan);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      console.error("Invalid ingredients format:", error.message);
+    }
+  }
+}
+```
+
+## Configuration
+
+```typescript
+interface VeganifyConfig {
+  baseUrl?: string; // Custom API base URL
+  cacheTTL?: number; // Cache time-to-live in milliseconds
+  staging?: boolean; // Use staging environment
+}
+
+// Example: Configure with custom settings
+const veganify = Veganify.getInstance({
+  cacheTTL: 3600000, // 1 hour cache
+  staging: true, // Use staging environment
+});
 ```
 
 ## API Reference
@@ -48,72 +78,179 @@ import Veganify from "@frontendnetwork/veganify";
 
 #### `getProductByBarcode(barcode: string): Promise<ProductResponse>`
 
-Retrieves product information using a barcode.
+Retrieves detailed product information using a barcode number. This method queries multiple databases to gather comprehensive vegan and ethical product data.
+
+**Parameters**:
+
+- `barcode`: A string containing the product barcode (must contain only digits)
+
+**Returns**:
+
+A promise that resolves to a ProductResponse object containing the response type.
 
 ```typescript
-const product = await Veganify.getProductByBarcode("4066600204404");
+try {
+  const product = await veganify.getProductByBarcode("4066600204404");
+  console.log(product.product.vegan); // true/false/"n/a"
+  console.log(product.product.productname); // "Product Name"
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    console.error("Product not found");
+  } else if (error instanceof ValidationError) {
+    console.error("Invalid barcode format");
+  }
+}
 ```
 
-Response includes:
+Response Type:
 
-- Product name
-- Vegan status
-- Vegetarian status
-- Animal testing status
-- Palm oil status
-- Nutriscore (if available)
+```typescript
+interface ProductResponse {
+  status: number;
+  product: {
+    productname: string;
+    genericname?: string;
+    vegan?: boolean | "n/a";
+    vegetarian?: boolean | "n/a";
+    animaltestfree?: boolean | "n/a";
+    palmoil?: boolean | "n/a";
+    nutriscore?: string;
+    grade?: string;
+  };
+  sources: {
+    processed: boolean;
+    api: string;
+    baseuri: string;
+  };
+}
+```
 
 ### Ingredients Analysis
 
-#### `checkIngredientsListV1(ingredientsList: string): Promise<IngredientsCheckResponseV1>`
+#### `checkIngredientsListV1(ingredientsList: string, preprocessed?: boolean): Promise<IngredientsCheckResponseV1>`
 
-Analyzes a comma-separated list of ingredients to determine if they are vegan.
+Analyzes a list of ingredients to determine their vegan status. The method categorizes ingredients into different groups based on certainty of their vegan status.
+
+**Parameters**:
+
+- `ingredientsList`: A string containing comma-separated ingredients
+- `preprocessed`: (Optional) Boolean indicating whether to preprocess the ingredients list (defaults to true)
+
+**Returns**:
+
+A promise that resolves to an IngredientsCheckResponseV1 return type.
 
 ```typescript
-const result = await Veganify.checkIngredientsListV1("water,sugar,milk");
+try {
+  const result = await veganify.checkIngredientsListV1("water, sugar, milk");
+  console.log("Is vegan:", result.data.vegan);
+  console.log("Surely vegan:", result.data.surely_vegan);
+  console.log("Not vegan:", result.data.not_vegan);
+  console.log("Maybe not vegan:", result.data.maybe_not_vegan);
+  console.log("Unknown:", result.data.unknown);
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.error("Invalid ingredients format");
+  }
+}
 ```
 
-Response categories:
+Response Type:
 
-- Surely vegan ingredients
-- Non-vegan ingredients
-- Maybe not vegan ingredients
-- Unknown ingredients
-- Overall vegan status
-
-#### `checkIngredientsList(ingredientsList: string): Promise<IngredientsCheckResponse>`
-
-⚠️ **Deprecated**: Please use `checkIngredientsListV1` instead.
+```typescript
+interface IngredientsCheckResponseV1 {
+  code: string;
+  status: string;
+  message: string;
+  data: {
+    vegan: boolean;
+    surely_vegan: string[];
+    not_vegan: string[];
+    maybe_not_vegan: string[];
+    unknown: string[];
+  };
+}
+```
 
 ### PETA Cruelty-Free Brands
 
 #### `getPetaCrueltyFreeBrands(): Promise<PetaCrueltyFreeResponse>`
 
-Returns a list of PETA-certified cruelty-free brands.
+Retrieves the current list of PETA-certified cruelty-free brands.
+
+**Returns**:
+A promise that resolves to a `PetaCrueltyFreeResponse` object:
 
 ```typescript
-const brands = await Veganify.getPetaCrueltyFreeBrands();
+interface PetaCrueltyFreeResponse {
+  LAST_UPDATE: string; // Last database update timestamp
+  PETA_DOES_NOT_TEST: string[]; // Array of cruelty-free brand names
+}
 ```
 
-## Example Usage
+```typescript
+try {
+  const brands = await veganify.getPetaCrueltyFreeBrands();
+  console.log("Last update:", brands.LAST_UPDATE);
+  console.log("Cruelty-free brands:", brands.PETA_DOES_NOT_TEST);
+} catch (error) {
+  console.error("Failed to fetch PETA brands:", error.message);
+}
+```
+
+## Error Handling
+
+The package provides custom error classes for different scenarios:
+
+```typescript
+import {
+  ValidationError,
+  NotFoundError,
+  VeganifyError,
+} from "@frontendnetwork/veganify";
+
+try {
+  // Your code here
+} catch (error) {
+  if (error instanceof ValidationError) {
+    // Handle validation errors (400)
+  } else if (error instanceof NotFoundError) {
+    // Handle not found errors (404)
+  } else if (error instanceof VeganifyError) {
+    // Handle other API errors
+  } else {
+    // Handle unexpected errors
+  }
+}
+```
+
+## Framework Examples
 
 ### React Example
 
-```typescript
-import Veganify from "@frontendnetwork/veganify";
+```tsx
 import { useState } from "react";
+import Veganify, { ValidationError } from "@frontendnetwork/veganify";
 
 const IngredientsChecker = () => {
   const [ingredients, setIngredients] = useState("");
   const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const veganify = Veganify.getInstance();
 
   const handleCheck = async (e) => {
     e.preventDefault();
     try {
-      const analysis = await Veganify.checkIngredientsListV1(ingredients);
+      const analysis = await veganify.checkIngredientsListV1(ingredients);
       setResult(analysis);
+      setError("");
     } catch (error) {
-      console.error("Error checking ingredients:", error);
+      setResult(null);
+      if (error instanceof ValidationError) {
+        setError("Please enter valid ingredients");
+      } else {
+        setError("An error occurred while checking ingredients");
+      }
     }
   };
 
@@ -121,16 +258,18 @@ const IngredientsChecker = () => {
     <div>
       <form onSubmit={handleCheck}>
         <input
-          type="text"
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}
           placeholder="Enter ingredients (comma-separated)"
         />
         <button type="submit">Check Ingredients</button>
       </form>
+
+      {error && <div className="error">{error}</div>}
+
       {result && (
         <div>
-          <h3>Results:</h3>
+          <h3>Analysis Results:</h3>
           <p>Vegan: {result.data.vegan ? "Yes" : "No"}</p>
           {result.data.not_vegan.length > 0 && (
             <p>Non-vegan ingredients: {result.data.not_vegan.join(", ")}</p>
@@ -145,6 +284,8 @@ const IngredientsChecker = () => {
     </div>
   );
 };
+
+export default IngredientsChecker;
 ```
 
 ### Vue Example
@@ -159,8 +300,11 @@ const IngredientsChecker = () => {
       />
       <button type="submit">Check</button>
     </form>
+
+    <div v-if="error" class="error">{{ error }}</div>
+
     <div v-if="result">
-      <h3>Analysis Result:</h3>
+      <h3>Analysis Results:</h3>
       <p>Vegan Status: {{ result.data.vegan ? "Vegan" : "Not Vegan" }}</p>
       <p v-if="result.data.not_vegan.length">
         Non-vegan ingredients: {{ result.data.not_vegan.join(", ") }}
@@ -169,47 +313,74 @@ const IngredientsChecker = () => {
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { ref } from "vue";
-import Veganify from "@frontendnetwork/veganify";
+import Veganify, { ValidationError } from "@frontendnetwork/veganify";
 
-export default {
-  setup() {
-    const ingredients = ref("");
-    const result = ref(null);
+const veganify = Veganify.getInstance();
+const ingredients = ref("");
+const result = ref(null);
+const error = ref("");
 
-    const checkIngredients = async () => {
-      try {
-        result.value = await Veganify.checkIngredientsListV1(ingredients.value);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    return { ingredients, result, checkIngredients };
-  },
-};
+async function checkIngredients() {
+  try {
+    result.value = await veganify.checkIngredientsListV1(ingredients.value);
+    error.value = "";
+  } catch (e) {
+    result.value = null;
+    if (e instanceof ValidationError) {
+      error.value = "Please enter valid ingredients";
+    } else {
+      error.value = "An error occurred while checking ingredients";
+    }
+  }
+}
 </script>
 ```
 
-## Error Handling
+## Advanced Features
 
-The API wrapper throws errors with HTTP status codes for different scenarios:
+### Caching
+
+The package includes a built-in caching system with configurable TTL:
 
 ```typescript
-try {
-  const result = await Veganify.checkIngredientsListV1("invalid,ingredients");
-} catch (error) {
-  if (error.response?.status === 400) {
-    console.error("Bad request - invalid ingredients format");
-  } else if (error.response?.status === 404) {
-    console.error("Not found");
-  }
-}
+const veganify = Veganify.getInstance({
+  cacheTTL: 1800000, // 30 minutes, set to 0 to disable caching
+});
+
+// Clear cache if needed
+veganify.clearCache();
+
+// The next API call will fetch fresh data
+const product = await veganify.getProductByBarcode("4066600204404");
 ```
 
-For detailed error codes and their meanings, see the [Veganify API Documentation](https://frontendnet.work/veganify-api).
+### Ingredient Preprocessing
 
-## TypeScript Support
+The package exports a utility function that cleans and standardizes ingredient lists for analysis.
 
-This package includes TypeScript definitions. For the Interfaces, please see the [source code](https://github.com/frontendnetwork/veganify-api-wrapper/blob/main/lib/interfaces.ts).
+**Parameters**:
+
+- `ingredientsList`: Raw ingredient list string
+
+**Returns**:
+
+An array of cleaned and normalized ingredient names
+
+```typescript
+import { preprocessIngredients } from "@frontendnetwork/veganify";
+
+const cleanIngredients = preprocessIngredients(
+  "water 100%, sugar (organic), salt:"
+);
+// Result: ['water', 'sugar', 'organic', 'salt']
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT © FrontEndNet.work, Philip Brembeck

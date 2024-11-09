@@ -1,97 +1,152 @@
+import { z } from "zod";
 import {
   ProductResponse,
-  IngredientsCheckResponse,
-  PetaCrueltyFreeResponse,
-  ErrorResponse,
   IngredientsCheckResponseV1,
-} from "./interfaces";
+  PetaCrueltyFreeResponse,
+  ProductResponseSchema,
+  IngredientsCheckResponseV1Schema,
+  PetaCrueltyFreeResponseSchema,
+  VeganifyError,
+  ValidationError,
+  NotFoundError,
+} from "./types";
+import { preprocessIngredients, Cache } from "./utils";
 
-const PRODUCTION_API_BASE_URL = "https://api.veganify.app/v0";
-const STAGING_API_BASE_URL = "https://staging.api.veganify.app/v0";
+interface VeganifyConfig {
+  baseUrl?: string;
+  cacheTTL?: number;
+  staging?: boolean;
+}
 
-const getApiBaseUrl = (staging?: boolean): string => {
-  return staging ? STAGING_API_BASE_URL : PRODUCTION_API_BASE_URL;
-};
+class Veganify {
+  private readonly baseUrl: string;
+  private readonly productCache: Cache<ProductResponse>;
+  private readonly ingredientsCache: Cache<IngredientsCheckResponseV1>;
+  private readonly petaCache: Cache<PetaCrueltyFreeResponse>;
+  private static instance: Veganify;
 
-const Veganify = {
-  getProductByBarcode: async (
-    barcode: string,
-    staging?: boolean
-  ): Promise<ProductResponse | ErrorResponse> => {
+  private constructor(config: VeganifyConfig = {}) {
+    this.baseUrl = config.staging
+      ? "https://staging.api.veganify.app"
+      : "https://api.veganify.app";
+
+    const ttl = config.cacheTTL ?? 1800000; // 30 minutes default
+    this.productCache = new Cache<ProductResponse>(ttl);
+    this.ingredientsCache = new Cache<IngredientsCheckResponseV1>(ttl);
+    this.petaCache = new Cache<PetaCrueltyFreeResponse>(ttl);
+  }
+
+  static getInstance(config?: VeganifyConfig): Veganify {
+    if (!Veganify.instance) {
+      Veganify.instance = new Veganify(config);
+    }
+    return Veganify.instance;
+  }
+
+  private async fetchWithValidation<T>(
+    url: string,
+    schema: z.ZodType<T>,
+    options: RequestInit = {}
+  ): Promise<T> {
     try {
-      const API_BASE_URL = getApiBaseUrl(staging);
-      const response = await fetch(`${API_BASE_URL}/product/${barcode}`, {
-        method: "POST",
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          Accept: "application/json",
+          ...options.headers,
+        },
       });
 
       if (!response.ok) {
-        throw { response: { status: response.status } };
+        switch (response.status) {
+          case 404:
+            throw new NotFoundError("Resource not found");
+          case 400:
+            throw new ValidationError("Invalid request");
+          default:
+            throw new VeganifyError(
+              `HTTP error ${response.status}`,
+              response.status
+            );
+        }
       }
 
-      return await response.json();
+      const data = await response.json();
+      return schema.parse(data);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new ValidationError("Invalid response format", error);
+      }
       throw error;
     }
-  },
+  }
 
-  checkIngredientsList: async (
+  async getProductByBarcode(barcode: string): Promise<ProductResponse> {
+    if (!/^\d+$/.test(barcode)) {
+      throw new ValidationError("Invalid barcode format");
+    }
+
+    const cacheKey = `product:${barcode}`;
+    const cached = this.productCache.get(cacheKey);
+    if (cached) return cached;
+
+    const url = `${this.baseUrl}/v0/product/${barcode}`;
+    const result = await this.fetchWithValidation(url, ProductResponseSchema, {
+      method: "POST",
+    });
+
+    this.productCache.set(cacheKey, result);
+    return result;
+  }
+
+  async checkIngredientsListV1(
     ingredientsList: string,
-    staging?: boolean
-  ): Promise<IngredientsCheckResponse> => {
-    try {
-      const API_BASE_URL = getApiBaseUrl(staging);
-      const response = await fetch(
-        `${API_BASE_URL}/ingredients/${ingredientsList}`
-      );
-
-      if (!response.ok) {
-        throw { response: { status: response.status } };
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
+    preprocessed: boolean = true
+  ): Promise<IngredientsCheckResponseV1> {
+    const ingredients = preprocessed
+      ? preprocessIngredients(ingredientsList)
+      : ingredientsList.split(",");
+    if (ingredients.length === 0) {
+      throw new ValidationError("No valid ingredients provided");
     }
-  },
 
-  checkIngredientsListV1: async (
-    ingredientsList: string,
-    staging?: boolean
-  ): Promise<IngredientsCheckResponseV1> => {
-    try {
-      const API_BASE_URL = staging
-        ? STAGING_API_BASE_URL
-        : PRODUCTION_API_BASE_URL;
-      const V1_API_BASE_URL = API_BASE_URL.replace("/v0", "/v1");
+    const ingredientsString = ingredients.join(",");
+    const cacheKey = `ingredients:${ingredientsString}`;
+    const cached = this.ingredientsCache.get(cacheKey);
+    if (cached) return cached;
 
-      const response = await fetch(
-        `${V1_API_BASE_URL}/ingredients/${ingredientsList}`
-      );
-      if (!response.ok) {
-        throw { response: { status: response.status } };
-      }
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
-  },
+    const url = `${this.baseUrl}/v1/ingredients/${ingredientsString}`;
+    const result = await this.fetchWithValidation(
+      url,
+      IngredientsCheckResponseV1Schema
+    );
 
-  getPetaCrueltyFreeBrands: async (
-    staging?: boolean
-  ): Promise<PetaCrueltyFreeResponse> => {
-    try {
-      const API_BASE_URL = getApiBaseUrl(staging);
-      const response = await fetch(`${API_BASE_URL}/peta/crueltyfree`);
+    this.ingredientsCache.set(cacheKey, result);
+    return result;
+  }
 
-      if (!response.ok) {
-        throw { response: { status: response.status } };
-      }
+  async getPetaCrueltyFreeBrands(): Promise<PetaCrueltyFreeResponse> {
+    const cacheKey = "peta:crueltyfree";
+    const cached = this.petaCache.get(cacheKey);
+    if (cached) return cached;
 
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
-  },
-};
+    const url = `${this.baseUrl}/v0/peta/crueltyfree`;
+    const result = await this.fetchWithValidation(
+      url,
+      PetaCrueltyFreeResponseSchema
+    );
+
+    this.petaCache.set(cacheKey, result);
+    return result;
+  }
+
+  clearCache(): void {
+    this.productCache.clear();
+    this.ingredientsCache.clear();
+    this.petaCache.clear();
+  }
+}
 
 export default Veganify;
+export * from "./types";
+export { preprocessIngredients };
