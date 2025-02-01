@@ -1,6 +1,6 @@
 {
   "name": "@frontendnetwork/veganify",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "A wrapper for the official Veganify API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
