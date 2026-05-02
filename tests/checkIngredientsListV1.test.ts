@@ -4,9 +4,14 @@ describe("Veganify Ingredients Analysis", () => {
   let veganify: Veganify;
 
   beforeEach(() => {
+    Veganify.resetInstance();
     veganify = Veganify.getInstance({ staging: true });
     veganify.clearCache();
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Veganify.resetInstance();
   });
 
   describe("checkIngredientsListV1", () => {
@@ -151,6 +156,34 @@ describe("Veganify Ingredients Analysis", () => {
       result1.data.vegan = false;
       const result2 = await veganify.checkIngredientsListV1("water");
       expect(result2.data.vegan).toBe(true);
+    });
+    it("should URL-encode the ingredients path segment", async () => {
+      const mockResponse = {
+        code: "200",
+        status: "success",
+        message: "OK",
+        data: {
+          vegan: true,
+          surely_vegan: ["water"],
+          not_vegan: [],
+          maybe_not_vegan: [],
+          unknown: [],
+        },
+      };
+
+      let capturedUrl = "";
+      global.fetch = jest.fn().mockImplementation((url: string) => {
+        capturedUrl = url;
+        return Promise.resolve({ ok: true, json: async () => mockResponse });
+      });
+
+      // Ingredients with characters that must be percent-encoded in a URL path
+      await veganify.checkIngredientsListV1("water & salt", false);
+
+      const urlObj = new URL(capturedUrl);
+      // The path segment after /v1/ingredients/ should be percent-encoded
+      expect(urlObj.pathname).not.toContain(" & ");
+      expect(decodeURIComponent(urlObj.pathname)).toContain("water & salt");
     });
   });
 });

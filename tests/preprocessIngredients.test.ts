@@ -75,7 +75,9 @@ describe("preprocessIngredients", () => {
   it("should handle invalid inputs", () => {
     const invalidInputs = [undefined, null, 123, {}, [], new Date()];
     invalidInputs.forEach((input) => {
-      expect(preprocessIngredients(input as string)).toEqual([]);
+      expect(
+        (preprocessIngredients as (i: unknown) => string[])(input)
+      ).toEqual([]);
     });
   });
 

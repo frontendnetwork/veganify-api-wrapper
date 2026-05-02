@@ -7,13 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "19.x"
-      - name: Install dependencies
-        run: npm ci
+          node-version: "22.x"
+      - name: Run tests
+        run: npm ci && npm test
   build-publish:
     needs: test
     runs-on: ubuntu-latest
@@ -22,14 +22,14 @@ jobs:
       url: https://www.npmjs.com/package/@frontendnetwork/veganify
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "19.x"
+          node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
       - name: Install dependencies & build
-        run: npm ci && npm install -g rimraf && npm run build
+        run: npm ci && npm run build
       - name: Publish package on NPM
         run: |
           npm publish 
@@ -43,16 +43,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "19.x"
+          node-version: "22.x"
       - name: Install dependencies
         run: npm ci
       - name: Verify package installation
         run: |
           PACKAGE_VERSION=$(npm view @frontendnetwork/veganify version)
           echo "Latest version of the package is: $PACKAGE_VERSION"
-          echo "package-version=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-          npm install @frontendnetwork/veganify@${{ env.package-version }}
+          npm install @frontendnetwork/veganify@$PACKAGE_VERSION

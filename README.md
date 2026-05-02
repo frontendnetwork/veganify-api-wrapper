@@ -13,11 +13,13 @@ A modern, type-safe wrapper for the official [Veganify API](https://github.com/f
 
 ## Features
 
-- 🎯 **Type Safety**: Full TypeScript support with Zod validation
-- 🚀 **Performance**: Built-in caching system
-- 🛡️ **Robust Error Handling**: Custom error types for different scenarios
+- 🎯 **Type Safety**: Full TypeScript support with Zod v4 validation
+- 🚀 **Performance**: Built-in TTL + LRU caching per API method
+- 🛡️ **Robust Error Handling**: Custom error types with native `Error.cause` chaining
 - ⚡ **Framework Agnostic**: Works with any JavaScript framework
-- 🔄 **Modern Architecture**: Singleton pattern with configurable instances
+- 🔄 **Modern Architecture**: Singleton pattern with `resetInstance()` for testing
+- 📦 **Dual Package**: Ships both CommonJS (`require`) and ESM (`import`) builds
+- ⏱️ **Timeout Support**: Requests are automatically aborted after a configurable deadline
 
 ## Installation
 
@@ -60,19 +62,38 @@ async function checkIngredients() {
 
 ```typescript
 interface VeganifyConfig {
-  baseUrl?: string; // Custom API base URL
-  cacheTTL?: number; // Cache time-to-live in milliseconds
-  staging?: boolean; // Use staging environment
+  baseUrl?: string;      // Override the API base URL entirely
+  cacheTTL?: number;     // Cache TTL in ms (0 or negative = disabled). Default: 1 800 000 (30 min)
+  staging?: boolean;     // Point requests at the staging API
+  timeout?: number;      // Request timeout in ms. Default: 10 000 (10 s)
+  cacheMaxSize?: number; // Max entries per cache bucket before LRU eviction. Default: 500
 }
 
 // Example: Configure with custom settings
 const veganify = Veganify.getInstance({
-  cacheTTL: 3600000, // 1 hour cache
-  staging: true, // Use staging environment
+  cacheTTL: 3600000,   // 1 hour cache
+  staging: true,       // Use staging environment
+  timeout: 5000,       // Abort requests after 5 s
+  cacheMaxSize: 200,   // Keep at most 200 entries per cache
 });
 ```
 
 ## API Reference
+
+### Instance Management
+
+#### `Veganify.getInstance(config?: VeganifyConfig): Veganify`
+
+Returns the shared singleton instance, creating it on the first call. Subsequent calls with different `config` values are ignored — use `resetInstance()` first to apply new configuration.
+
+#### `Veganify.resetInstance(): void`
+
+Destroys the current singleton so the next `getInstance()` call creates a fresh instance with new configuration. Primarily intended for tests and server-side lifecycle hooks.
+
+```typescript
+Veganify.resetInstance();
+const fresh = Veganify.getInstance({ cacheTTL: 0, staging: true });
+```
 
 ### Product Information
 
@@ -200,7 +221,15 @@ try {
 
 ## Error Handling
 
-The package provides custom error classes for different scenarios:
+The package provides three custom error classes. All extend `VeganifyError` which extends the native `Error`:
+
+| Class | `statusCode` | When thrown |
+|---|---|---|
+| `VeganifyError` | varies | Base class; also thrown for HTTP errors, timeouts (408) |
+| `ValidationError` | 400 | Malformed barcode, empty ingredients, invalid response schema |
+| `NotFoundError` | 404 | Product or resource not found |
+
+The `error.cause` property is set on all errors (native `Error.cause` chaining):
 
 ```typescript
 import {
@@ -214,10 +243,12 @@ try {
 } catch (error) {
   if (error instanceof ValidationError) {
     // Handle validation errors (400)
+    console.error(error.message, error.cause);
   } else if (error instanceof NotFoundError) {
     // Handle not found errors (404)
   } else if (error instanceof VeganifyError) {
-    // Handle other API errors
+    // Handle other API errors (timeouts return statusCode 408)
+    console.error(`HTTP ${error.statusCode}:`, error.message);
   } else {
     // Handle unexpected errors
   }
@@ -342,18 +373,53 @@ async function checkIngredients() {
 
 ### Caching
 
-The package includes a built-in caching system with configurable TTL:
+The package includes a built-in TTL + LRU cache. Each API method (product, ingredients, PETA brands) maintains its own cache bucket:
 
 ```typescript
 const veganify = Veganify.getInstance({
-  cacheTTL: 1800000, // 30 minutes, set to 0 to disable caching
+  cacheTTL: 1800000,  // 30 minutes TTL (set to 0 to disable)
+  cacheMaxSize: 200,  // Evict least-recently-used entry when > 200 items
 });
 
-// Clear cache if needed
+// Clear all cache buckets at any time
 veganify.clearCache();
 
-// The next API call will fetch fresh data
+// The next call will fetch fresh data
 const product = await veganify.getProductByBarcode("4066600204404");
+```
+
+### Timeout
+
+All requests are automatically cancelled after a configurable timeout:
+
+```typescript
+const veganify = Veganify.getInstance({ timeout: 5000 }); // 5 s
+
+try {
+  const result = await veganify.checkIngredientsListV1("water,sugar");
+} catch (error) {
+  if (error instanceof VeganifyError && error.statusCode === 408) {
+    console.error("Request timed out");
+  }
+}
+```
+
+### Resetting the Singleton
+
+`Veganify` uses a singleton pattern — `getInstance()` always returns the same object. Use `resetInstance()` to tear down the singleton so the next call creates a fresh one with new configuration. This is particularly useful in tests and server-side lifecycle code:
+
+```typescript
+import Veganify from "@frontendnetwork/veganify";
+
+// In tests — reset between each test case
+afterEach(() => {
+  Veganify.resetInstance();
+});
+
+it("uses short TTL", async () => {
+  const veganify = Veganify.getInstance({ cacheTTL: 100 });
+  // ...
+});
 ```
 
 ### Ingredient Preprocessing
