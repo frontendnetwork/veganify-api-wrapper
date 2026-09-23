@@ -1,4 +1,5 @@
 import Veganify from "../lib";
+import { Cache } from "../lib/utils";
 
 const mockProduct = {
   status: 200,
@@ -77,8 +78,7 @@ describe("Veganify Cache Behavior", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it("should evict least-recently-used entry when maxSize is exceeded", async () => {
-    const Cache = (await import("../lib/utils")).Cache;
+  it("should evict least-recently-used entry when maxSize is exceeded", () => {
     const cache = new Cache<string>(60_000, 2);
 
     cache.set("a", "alpha");
