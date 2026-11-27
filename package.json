@@ -2,33 +2,36 @@
   "name": "@frontendnetwork/veganify",
   "version": "2.1.45",
   "description": "A wrapper for the official Veganify API",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/cjs/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/cjs/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "files": [
-    "dist/cjs",
-    "dist/esm"
+    "dist"
   ],
+  "sideEffects": false,
   "scripts": {
     "test": "bun test",
-    "clean": "rm -rf dist",
-    "check-types": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "check-types": "bun check --no-script",
     "format:check": "bun fmt --check",
     "format": "bun fmt",
     "check": "bun run lint && bun run format:check && bun run check-types && bun test",
-    "prebuild": "bun run check && npm run clean",
-    "build:cjs": "tsc -p tsconfig.json",
-    "build:esm": "tsc -p tsconfig.esm.json && node scripts/add-esm-extensions.mjs && echo '{\"type\":\"module\"}' > dist/esm/package.json",
-    "build": "npm run build:cjs && npm run build:esm",
-    "lint": "eslint lib",
-    "prepublishOnly": "npm run build"
+    "build": "tsdown",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "prepublishOnly": "bun run check && bun run build"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -54,12 +57,16 @@
     "access": "public"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@types/bun": "^1.4.5",
-    "@types/node": "^26.6.2",
     "oxlint": "^1.95.0",
     "oxlint-tsgolint": "^7.0.2009",
+    "publint": "^0.3.25",
+    "tsdown": "^0.23.7",
     "typescript": "^6.0.3",
-    "ultracite": "8.3.1",
-    "zod": "^4.6.5"
+    "ultracite": "8.3.1"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

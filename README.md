@@ -446,6 +446,17 @@ const cleanIngredients = preprocessIngredients(
 // Result: ['water', 'sugar', 'organic', 'salt']
 ```
 
+## Development
+
+```bash
+bun install      # install dependencies
+bun run check    # lint + format check + type check + tests
+bun run build    # tsdown build (ESM + CJS + .d.ts), runs publint and attw
+bun test         # run the test suite
+```
+
+Note for anyone deep-importing build output: the `dist/` layout changed — builds are now flat (`dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.cts`). Deep imports were never exposed through the `exports` map anyway; use the package entry point.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
