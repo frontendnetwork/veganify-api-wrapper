@@ -1,25 +1,88 @@
+# Release: semantic versioning + publishing via release-please.
+#
+# On every push to main, release-please inspects the Conventional Commit
+# history since v2.1.45:
+#   fix:  -> patch   feat: -> minor   !/BREAKING CHANGE -> major
+#   chore:/ci:/docs:/refactor:/test: -> no release
+# When feat/fix commits exist, it opens/updates a Release PR
+# ("chore(main): release X.Y.Z") that bumps package.json and maintains
+# CHANGELOG.md. Merging that PR (squash) tags vX.Y.Z, creates the GitHub
+# release, and the `publish` job below runs in the SAME workflow run.
+#
+# NOTE on recovery: if the GitHub Packages step fails after npm publish
+# succeeded, do NOT re-run the job (npm publish is not repeatable). Instead
+# publish the already-built tarball by hand:
+#   npm publish <frontendnetwork-veganify-X.Y.Z.tgz> \
+#     --registry https://npm.pkg.github.com --access public --ignore-scripts
 name: Release
-
-permissions:
-  contents: write
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+
+concurrency: { group: release, cancel-in-progress: false }
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
+    permissions: { contents: write, pull-requests: write }
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: googleapis/release-please-action@v5
+        id: release
         with:
-          fetch-depth: 0
+          # bumps package.json, maintains CHANGELOG.md, tags vX.Y.Z, creates the GitHub release
+          release-type: node
 
-      - uses: actions/setup-node@v7
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      {
+        name: npm registry,
+        url: https://www.npmjs.com/package/@frontendnetwork/veganify,
+      }
+    permissions: { contents: read, id-token: write } # id-token for npm provenance
+    steps:
+      - uses: actions/checkout@v7 # the Release PR merge commit: package.json already at the new version
+
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+
+      - uses: actions/setup-node@v7 # Node only for npm pack / npm publish --provenance
         with:
-          node-version: "22.x"
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
-      - run: npx changelogithub # or changelogithub@0.12 if ensure the stable result
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - run: npm install --global npm@latest
+
+      # bun.lock has no root version, so the Release PR's package.json bump never conflicts
+      - run: bun install --frozen-lockfile
+
+      - run: bun run check
+      - run: bun run build # attw + publint gate the artifact before it is published
+
+      - run: npm pack --pack-destination "$RUNNER_TEMP" # same `files` set as the publish below; kept as the GitHub Packages artifact
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tarball
+          path: "${{ runner.temp }}/frontendnetwork-veganify-${{ needs.release-please.outputs.version }}.tgz"
+
+      # from the workspace at the tagged commit; provenance needs the git checkout, not a tarball
+      - run: npm publish --access public --provenance --ignore-scripts
+
+      - name: Publish the packed tarball to GitHub Packages
+        run: |
+          npm publish "$RUNNER_TEMP/frontendnetwork-veganify-${{ needs.release-please.outputs.version }}.tgz" \
+            --access public --ignore-scripts --registry https://npm.pkg.github.com
+        env: { NODE_AUTH_TOKEN: "${{ secrets.GH_KEY }}" }
+
+      - name: Verify install outside the workspace
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir -p verify && cd verify && npm init -y >/dev/null
+          npm install @frontendnetwork/veganify@${{ needs.release-please.outputs.version }}

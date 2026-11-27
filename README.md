@@ -499,6 +499,16 @@ bun test         # run the test suite
 
 Pull request titles must follow [Conventional Commits](https://www.conventionalcommits.org) (`fix:`, `feat:`, `chore:`, …) — CI enforces this, and releases are derived from the titles. Every PR is squash-merged, so the PR title becomes the commit message on `main`.
 
+### Releasing
+
+Releases are fully automatic and content-driven:
+
+- `fix:` PR titles propose a **patch**, `feat:` a **minor**, `!`/`BREAKING CHANGE` a **major**; `chore:`/`ci:`/`docs:`/`refactor:` releases nothing on their own.
+- When releasable commits accumulate, [release-please](https://github.com/googleapis/release-please) opens a **Release PR** (`chore(main): release X.Y.Z`) that bumps `package.json` and updates `CHANGELOG.md`.
+- **Merging the Release PR** (squash) tags `vX.Y.Z`, creates the GitHub release with notes, and publishes that exact version to npm (with provenance) and GitHub Packages.
+
+Maintainers therefore only do two things differently: write Conventional Commit PR titles, and merge the Release PR. Dependabot bumps (`chore`) no longer trigger releases on their own.
+
 Note for anyone deep-importing build output: the `dist/` layout changed — builds are now flat (`dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.cts`). Deep imports were never exposed through the `exports` map anyway; use the package entry point.
 
 ## Contributing
