@@ -4,8 +4,8 @@ import Veganify, {
   ValidationError,
   NotFoundError,
   VeganifyError,
-  type ProductResponse,
 } from "../lib";
+import type { ProductResponse } from "../lib";
 
 const originalFetch = globalThis.fetch;
 
@@ -39,7 +39,7 @@ describe("Veganify Product Lookup", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockProduct,
+        json: () => Promise.resolve(mockProduct),
       });
 
       const result = await veganify.getProductByBarcode("4066600204404");
@@ -68,7 +68,7 @@ describe("Veganify Product Lookup", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockProduct,
+        json: () => Promise.resolve(mockProduct),
       });
 
       const result = await veganify.getProductByBarcode("4066600204404");
@@ -90,7 +90,7 @@ describe("Veganify Product Lookup", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockProduct,
+        json: () => Promise.resolve(mockProduct),
       });
 
       const result = await veganify.getProductByBarcode("4066600204404");
@@ -106,7 +106,7 @@ describe("Veganify Product Lookup", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockProduct,
+        json: () => Promise.resolve(mockProduct),
       });
 
       await expect(veganify.getProductByBarcode("123")).resolves.toBeDefined();
@@ -154,9 +154,7 @@ describe("Veganify Product Lookup", () => {
     it("should handle invalid JSON responses", async () => {
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => {
-          throw new Error("Invalid JSON");
-        },
+        json: () => Promise.reject(new Error("Invalid JSON")),
       });
 
       await expect(
@@ -197,7 +195,7 @@ describe("Veganify Product Lookup", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockProduct,
+        json: () => Promise.resolve(mockProduct),
       });
 
       await veganify.getProductByBarcode("4066600204404");

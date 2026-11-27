@@ -27,7 +27,7 @@ describe("Veganify PETA Brands", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const result = await veganify.getPetaCrueltyFreeBrands();
@@ -43,7 +43,7 @@ describe("Veganify PETA Brands", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const result = await veganify.getPetaCrueltyFreeBrands();
@@ -59,7 +59,7 @@ describe("Veganify PETA Brands", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       await veganify.getPetaCrueltyFreeBrands();
@@ -79,7 +79,7 @@ describe("Veganify PETA Brands", () => {
       for (const response of malformedResponses) {
         globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
-          json: async () => response,
+          json: () => Promise.resolve(response),
         });
 
         await expect(veganify.getPetaCrueltyFreeBrands()).rejects.toThrow(

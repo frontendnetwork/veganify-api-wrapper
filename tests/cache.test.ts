@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { mockFetch } from "./helpers/mock-fetch";
 import Veganify from "../lib";
-import { Cache } from "../lib/utils";
+import { Cache } from "../lib/cache";
 
 const originalFetch = globalThis.fetch;
 
@@ -26,8 +26,14 @@ describe("Veganify Cache Behavior", () => {
     const veganifyNoCache = Veganify.getInstance({ cacheTTL: 0 });
 
     globalThis.fetch = mockFetch()
-      .mockResolvedValueOnce({ ok: true, json: async () => mockProduct })
-      .mockResolvedValueOnce({ ok: true, json: async () => mockProduct });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockProduct),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockProduct),
+      });
 
     await veganifyNoCache.getProductByBarcode("4066600204404");
     await veganifyNoCache.getProductByBarcode("4066600204404");
@@ -39,8 +45,14 @@ describe("Veganify Cache Behavior", () => {
     const veganifyNoCache = Veganify.getInstance({ cacheTTL: -1 });
 
     globalThis.fetch = mockFetch()
-      .mockResolvedValueOnce({ ok: true, json: async () => mockProduct })
-      .mockResolvedValueOnce({ ok: true, json: async () => mockProduct });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockProduct),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockProduct),
+      });
 
     await veganifyNoCache.getProductByBarcode("4066600204404");
     await veganifyNoCache.getProductByBarcode("4066600204404");
@@ -49,17 +61,18 @@ describe("Veganify Cache Behavior", () => {
   });
 
   it("should expire cache after TTL", async () => {
-    const veganifyShortCache = Veganify.getInstance({ cacheTTL: 100 }); // 100ms TTL
+    // 100ms TTL
+    const veganifyShortCache = Veganify.getInstance({ cacheTTL: 100 });
 
     globalThis.fetch = mockFetch().mockResolvedValue({
       ok: true,
-      json: async () => mockProduct,
+      json: () => Promise.resolve(mockProduct),
     });
 
     await veganifyShortCache.getProductByBarcode("4066600204404");
 
     // Wait for cache to expire
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await Bun.sleep(150);
 
     await veganifyShortCache.getProductByBarcode("4066600204404");
 
@@ -71,7 +84,7 @@ describe("Veganify Cache Behavior", () => {
 
     globalThis.fetch = mockFetch().mockResolvedValue({
       ok: true,
-      json: async () => mockProduct,
+      json: () => Promise.resolve(mockProduct),
     });
 
     await veganify.getProductByBarcode("4066600204404");

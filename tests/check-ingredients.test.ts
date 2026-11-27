@@ -36,7 +36,7 @@ describe("Veganify Ingredients Analysis", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const result = await veganify.checkIngredientsListV1("water,salt");
@@ -69,16 +69,16 @@ describe("Veganify Ingredients Analysis", () => {
           message: "OK",
           data: {
             vegan: testCase.vegan,
-            surely_vegan: testCase.surely_vegan || [],
-            not_vegan: testCase.not_vegan || [],
-            maybe_not_vegan: testCase.maybe_not_vegan || [],
-            unknown: testCase.unknown || [],
+            surely_vegan: testCase.surely_vegan ?? [],
+            not_vegan: testCase.not_vegan ?? [],
+            maybe_not_vegan: testCase.maybe_not_vegan ?? [],
+            unknown: testCase.unknown ?? [],
           },
         };
 
         globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse,
+          json: () => Promise.resolve(mockResponse),
         });
 
         const result = await veganify.checkIngredientsListV1(testCase.input);
@@ -110,7 +110,7 @@ describe("Veganify Ingredients Analysis", () => {
       for (const input of specialCharCases) {
         globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
-          json: async () => mockResponse,
+          json: () => Promise.resolve(mockResponse),
         });
 
         const result = await veganify.checkIngredientsListV1(input);
@@ -129,7 +129,7 @@ describe("Veganify Ingredients Analysis", () => {
       for (const response of malformedResponses) {
         globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
-          json: async () => response,
+          json: () => Promise.resolve(response),
         });
 
         await expect(
@@ -154,7 +154,7 @@ describe("Veganify Ingredients Analysis", () => {
 
       globalThis.fetch = mockFetch().mockResolvedValue({
         ok: true,
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const result1 = await veganify.checkIngredientsListV1("water");
@@ -179,7 +179,11 @@ describe("Veganify Ingredients Analysis", () => {
       let capturedUrl = "";
       globalThis.fetch = mockFetch().mockImplementation((url: string) => {
         capturedUrl = url;
-        return Promise.resolve({ ok: true, json: async () => mockResponse });
+
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockResponse),
+        });
       });
 
       // Ingredients with characters that must be percent-encoded in a URL path

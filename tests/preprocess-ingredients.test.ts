@@ -26,9 +26,9 @@ describe("preprocessIngredients", () => {
       "sugar (100.5)",
     ];
 
-    inputs.forEach((input) => {
+    for (const input of inputs) {
       expect(preprocessIngredients(input)).toEqual(["sugar"]);
-    });
+    }
   });
 
   it("should handle nested parentheses", () => {
@@ -68,18 +68,21 @@ describe("preprocessIngredients", () => {
       },
     ];
 
-    testCases.forEach(({ input, expected }) => {
+    for (const { input, expected } of testCases) {
       expect(preprocessIngredients(input)).toEqual(expected);
-    });
+    }
   });
 
   it("should handle invalid inputs", () => {
     const invalidInputs = [undefined, null, 123, {}, [], new Date()];
-    invalidInputs.forEach((input) => {
+
+    for (const input of invalidInputs) {
       expect(
-        (preprocessIngredients as (i: unknown) => string[])(input),
+        // SAFETY: deliberately passing non-strings to exercise the runtime guard
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion, anti-slop/no-unknown-parameters -- widening the parameter type is the point of this test
+        (preprocessIngredients as (candidate: unknown) => string[])(input),
       ).toEqual([]);
-    });
+    }
   });
 
   it("should handle ingredients with multiple words", () => {
