@@ -24,11 +24,12 @@ export default defineConfig({
     },
     {
       // Sequential mockResolvedValueOnce chains are the point of these tests.
-      // bun:test matcher methods are typed `void` (jest types them Promise<void>),
-      // so `await expect(...).rejects.toThrow()` trips await-thenable and
-      // no-confusing-void-expression as false positives. Stub bodies prefer the
-      // non-async `() => Promise.resolve(x)` shape, which promise-function-async
-      // would flag in turn — the two rules cannot both pass on these stubs.
+      // bun:test matcher methods are typed `void` (legacy frameworks type them
+      // Promise<void>), so `await expect(...).rejects.toThrow()` trips
+      // await-thenable and no-confusing-void-expression as false positives.
+      // Stub bodies prefer the non-async `() => Promise.resolve(x)` shape,
+      // which promise-function-async would flag in turn — the two rules
+      // cannot both pass on these stubs.
       files: ["tests/**"],
       rules: {
         "no-await-in-loop": "off",
