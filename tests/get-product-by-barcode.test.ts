@@ -1,27 +1,15 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect } from "bun:test";
 import { mockFetch } from "./helpers/mock-fetch";
-import Veganify, {
+import {
+  createVeganify,
   ValidationError,
   NotFoundError,
   VeganifyError,
 } from "../lib";
+
 import type { ProductResponse } from "../lib";
 
-const originalFetch = globalThis.fetch;
-
 describe("Veganify Product Lookup", () => {
-  let veganify: Veganify;
-
-  beforeEach(() => {
-    veganify = Veganify.getInstance({ staging: true });
-    veganify.clearCache();
-    mock.clearAllMocks();
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
-
   describe("getProductByBarcode", () => {
     it("should fetch product information successfully", async () => {
       const mockProduct: ProductResponse = {
@@ -37,12 +25,15 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockProduct),
+        }),
       });
 
-      const result = await veganify.getProductByBarcode("4066600204404");
+      const result = await client.getProductByBarcode("4066600204404");
       expect(result).toEqual(mockProduct);
     });
 
@@ -66,12 +57,15 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockProduct),
+        }),
       });
 
-      const result = await veganify.getProductByBarcode("4066600204404");
+      const result = await client.getProductByBarcode("4066600204404");
       expect(result).toEqual(mockProduct);
     });
 
@@ -88,12 +82,15 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockProduct),
+        }),
       });
 
-      const result = await veganify.getProductByBarcode("4066600204404");
+      const result = await client.getProductByBarcode("4066600204404");
       expect(result).toEqual(mockProduct);
     });
 
@@ -104,19 +101,22 @@ describe("Veganify Product Lookup", () => {
         sources: { processed: true, api: "test", baseuri: "test" },
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockProduct),
+        }),
       });
 
-      await expect(veganify.getProductByBarcode("123")).resolves.toBeDefined();
-      await expect(veganify.getProductByBarcode("abc")).rejects.toThrow(
+      await expect(client.getProductByBarcode("123")).resolves.toBeDefined();
+      await expect(client.getProductByBarcode("abc")).rejects.toThrow(
         ValidationError,
       );
-      await expect(veganify.getProductByBarcode("12.34")).rejects.toThrow(
+      await expect(client.getProductByBarcode("12.34")).rejects.toThrow(
         ValidationError,
       );
-      await expect(veganify.getProductByBarcode("")).rejects.toThrow(
+      await expect(client.getProductByBarcode("")).rejects.toThrow(
         ValidationError,
       );
     });
@@ -130,53 +130,65 @@ describe("Veganify Product Lookup", () => {
       ];
 
       for (const { status, error } of errorCases) {
-        globalThis.fetch = mockFetch().mockResolvedValueOnce({
-          ok: false,
-          status,
+        const client = createVeganify({
+          staging: true,
+          fetch: mockFetch().mockResolvedValueOnce({
+            ok: false,
+            status,
+          }),
         });
 
         await expect(
-          veganify.getProductByBarcode("4066600204404"),
+          client.getProductByBarcode("4066600204404"),
         ).rejects.toThrow(error);
       }
     });
 
     it("should handle network errors", async () => {
-      globalThis.fetch = mockFetch().mockRejectedValueOnce(
-        new Error("Network error"),
-      );
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockRejectedValueOnce(new Error("Network error")),
+      });
 
-      await expect(
-        veganify.getProductByBarcode("4066600204404"),
-      ).rejects.toThrow("Network error");
+      await expect(client.getProductByBarcode("4066600204404")).rejects.toThrow(
+        "Network error",
+      );
     });
 
     it("should handle invalid JSON responses", async () => {
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.reject(new Error("Invalid JSON")),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.reject(new Error("Invalid JSON")),
+        }),
       });
 
       await expect(
-        veganify.getProductByBarcode("4066600204404"),
+        client.getProductByBarcode("4066600204404"),
       ).rejects.toThrow();
     });
 
     it("should throw ValidationError for invalid barcode", async () => {
-      await expect(veganify.getProductByBarcode("invalid")).rejects.toThrow(
+      const client = createVeganify({ staging: true, fetch: mockFetch() });
+
+      await expect(client.getProductByBarcode("invalid")).rejects.toThrow(
         ValidationError,
       );
     });
 
     it("should throw NotFoundError for non-existent product", async () => {
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: false,
-        status: 404,
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+        }),
       });
 
-      await expect(
-        veganify.getProductByBarcode("0000000000000"),
-      ).rejects.toThrow(NotFoundError);
+      await expect(client.getProductByBarcode("0000000000000")).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it("should use cache for subsequent requests", async () => {
@@ -193,15 +205,17 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
+      const fetchMock = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockProduct),
       });
 
-      await veganify.getProductByBarcode("4066600204404");
-      await veganify.getProductByBarcode("4066600204404");
+      const client = createVeganify({ staging: true, fetch: fetchMock });
 
-      expect(fetch).toHaveBeenCalledTimes(1);
+      await client.getProductByBarcode("4066600204404");
+      await client.getProductByBarcode("4066600204404");
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 });

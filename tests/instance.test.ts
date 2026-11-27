@@ -14,7 +14,9 @@ describe("Veganify Instance Management", () => {
   it("should maintain singleton pattern", () => {
     const instance1 = Veganify.getInstance();
     const instance2 = Veganify.getInstance();
+
     expect(instance1).toBe(instance2);
+    expect(Veganify.getInstance()).toBeInstanceOf(Veganify);
   });
 
   it("should maintain configuration across instances", () => {

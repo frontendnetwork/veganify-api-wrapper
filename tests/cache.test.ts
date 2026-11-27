@@ -1,9 +1,7 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
-import { mockFetch } from "./helpers/mock-fetch";
-import Veganify from "../lib";
+import { describe, it, expect } from "bun:test";
+import { createVeganify } from "../lib";
 import { Cache } from "../lib/cache";
-
-const originalFetch = globalThis.fetch;
+import { mockFetch } from "./helpers/mock-fetch";
 
 const mockProduct = {
   status: 200,
@@ -12,61 +10,44 @@ const mockProduct = {
 };
 
 describe("Veganify Cache Behavior", () => {
-  beforeEach(() => {
-    Veganify.resetInstance();
-    mock.clearAllMocks();
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-    Veganify.resetInstance();
-  });
-
   it("should disable cache when TTL is 0", async () => {
-    const veganifyNoCache = Veganify.getInstance({ cacheTTL: 0 });
+    const fetchMock = mockFetch().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockProduct),
+    });
 
-    globalThis.fetch = mockFetch()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
-      });
+    const veganifyNoCache = createVeganify({ cacheTTL: 0, fetch: fetchMock });
 
     await veganifyNoCache.getProductByBarcode("4066600204404");
     await veganifyNoCache.getProductByBarcode("4066600204404");
 
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("should disable cache when TTL is negative", async () => {
-    const veganifyNoCache = Veganify.getInstance({ cacheTTL: -1 });
+    const fetchMock = mockFetch().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockProduct),
+    });
 
-    globalThis.fetch = mockFetch()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockProduct),
-      });
+    const veganifyNoCache = createVeganify({ cacheTTL: -1, fetch: fetchMock });
 
     await veganifyNoCache.getProductByBarcode("4066600204404");
     await veganifyNoCache.getProductByBarcode("4066600204404");
 
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("should expire cache after TTL", async () => {
-    // 100ms TTL
-    const veganifyShortCache = Veganify.getInstance({ cacheTTL: 100 });
-
-    globalThis.fetch = mockFetch().mockResolvedValue({
+    const fetchMock = mockFetch().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockProduct),
+    });
+
+    // 100ms TTL
+    const veganifyShortCache = createVeganify({
+      cacheTTL: 100,
+      fetch: fetchMock,
     });
 
     await veganifyShortCache.getProductByBarcode("4066600204404");
@@ -76,22 +57,22 @@ describe("Veganify Cache Behavior", () => {
 
     await veganifyShortCache.getProductByBarcode("4066600204404");
 
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("should handle cache clear", async () => {
-    const veganify = Veganify.getInstance({ cacheTTL: 1000 });
-
-    globalThis.fetch = mockFetch().mockResolvedValue({
+    const fetchMock = mockFetch().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockProduct),
     });
+
+    const veganify = createVeganify({ cacheTTL: 1000, fetch: fetchMock });
 
     await veganify.getProductByBarcode("4066600204404");
     veganify.clearCache();
     await veganify.getProductByBarcode("4066600204404");
 
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("should evict least-recently-used entry when maxSize is exceeded", () => {

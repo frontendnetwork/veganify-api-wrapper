@@ -42,10 +42,10 @@ bun add @frontendnetwork/veganify
 ## Quick Start
 
 ```typescript
-import Veganify from "@frontendnetwork/veganify";
+import { createVeganify } from "@frontendnetwork/veganify";
 
-// Get an instance with default configuration
-const veganify = Veganify.getInstance();
+// Create an independent client (preferred in new code)
+const veganify = createVeganify();
 
 // Example: Check if ingredients are vegan
 async function checkIngredients() {
@@ -70,10 +70,11 @@ interface VeganifyConfig {
   staging?: boolean; // Point requests at the staging API
   timeout?: number; // Request timeout in ms. Default: 10 000 (10 s)
   cacheMaxSize?: number; // Max entries per cache bucket before LRU eviction. Default: 500
+  fetch?: typeof globalThis.fetch; // Inject a fetch implementation (tests, proxies, wrapped fetch). Default: globalThis.fetch
 }
 
 // Example: Configure with custom settings
-const veganify = Veganify.getInstance({
+const veganify = createVeganify({
   cacheTTL: 3600000, // 1 hour cache
   staging: true, // Use staging environment
   timeout: 5000, // Abort requests after 5 s
@@ -83,7 +84,23 @@ const veganify = Veganify.getInstance({
 
 ## API Reference
 
-### Instance Management
+### Creating a Client
+
+#### `createVeganify(config?: VeganifyConfig): Veganify`
+
+Creates an independent client with the given configuration. Every call returns a new object; instances share no state. This is the recommended way to use the package in new code.
+
+```typescript
+import { createVeganify } from "@frontendnetwork/veganify";
+
+const stagingClient = createVeganify({ staging: true });
+const prodClient = createVeganify();
+// Both exist side by side with their own caches and configuration
+```
+
+You can also use the constructor directly — `new Veganify(config)` behaves exactly like `createVeganify(config)`.
+
+### Instance Management (existing API)
 
 #### `Veganify.getInstance(config?: VeganifyConfig): Veganify`
 
@@ -94,9 +111,13 @@ Returns the shared singleton instance, creating it on the first call. Subsequent
 Destroys the current singleton so the next `getInstance()` call creates a fresh instance with new configuration. Primarily intended for tests and server-side lifecycle hooks.
 
 ```typescript
+import Veganify from "@frontendnetwork/veganify";
+
 Veganify.resetInstance();
 const fresh = Veganify.getInstance({ cacheTTL: 0, staging: true });
 ```
+
+> Prefer `createVeganify()` in new code — it needs no reset dance and keeps instances independent. The singleton stays for backward compatibility; `resetInstance()` never affects clients created with `createVeganify()` or `new Veganify()`.
 
 ### Product Information
 
@@ -264,13 +285,15 @@ try {
 
 ```tsx
 import { useState } from "react";
-import Veganify, { ValidationError } from "@frontendnetwork/veganify";
+import { createVeganify, ValidationError } from "@frontendnetwork/veganify";
+
+// Create the client once at module scope, not inside the component body
+const veganify = createVeganify();
 
 const IngredientsChecker = () => {
   const [ingredients, setIngredients] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const veganify = Veganify.getInstance();
 
   const handleCheck = async (e) => {
     e.preventDefault();
@@ -349,9 +372,10 @@ export default IngredientsChecker;
 
 <script setup lang="ts">
 import { ref } from "vue";
-import Veganify, { ValidationError } from "@frontendnetwork/veganify";
+import { createVeganify, ValidationError } from "@frontendnetwork/veganify";
 
-const veganify = Veganify.getInstance();
+// Create the client once at module scope, not inside the component
+const veganify = createVeganify();
 const ingredients = ref("");
 const result = ref(null);
 const error = ref("");
@@ -422,6 +446,24 @@ afterEach(() => {
 it("uses short TTL", async () => {
   const veganify = Veganify.getInstance({ cacheTTL: 100 });
   // ...
+});
+```
+
+In new code, prefer independent clients — they need no reset dance:
+
+```typescript
+const veganify = createVeganify({ cacheTTL: 100 });
+```
+
+### Injecting a Fetch Implementation
+
+Every client reads `globalThis.fetch` at call time by default, so polyfills and test frameworks that replace the global keep working. For full control, inject a `fetch` through the config — useful for tests, Next.js wrapped `fetch`, edge runtimes or proxies:
+
+```typescript
+import { createVeganify } from "@frontendnetwork/veganify";
+
+const veganify = createVeganify({
+  fetch: (input, init) => myWrappedFetch(input, init),
 });
 ```
 

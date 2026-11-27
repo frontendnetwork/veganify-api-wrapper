@@ -1,22 +1,8 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect } from "bun:test";
+import { createVeganify, ValidationError } from "../lib";
 import { mockFetch } from "./helpers/mock-fetch";
-import Veganify, { ValidationError } from "../lib";
-
-const originalFetch = globalThis.fetch;
 
 describe("Veganify PETA Brands", () => {
-  let veganify: Veganify;
-
-  beforeEach(() => {
-    veganify = Veganify.getInstance({ staging: true });
-    veganify.clearCache();
-    mock.clearAllMocks();
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
-
   describe("getPetaCrueltyFreeBrands", () => {
     it("should fetch PETA brands successfully", async () => {
       const mockResponse = {
@@ -25,12 +11,15 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: ["Brand1", "Brand2"],
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse),
+        }),
       });
 
-      const result = await veganify.getPetaCrueltyFreeBrands();
+      const result = await client.getPetaCrueltyFreeBrands();
       expect(result).toEqual(mockResponse);
     });
 
@@ -41,12 +30,15 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: [],
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
+      const client = createVeganify({
+        staging: true,
+        fetch: mockFetch().mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockResponse),
+        }),
       });
 
-      const result = await veganify.getPetaCrueltyFreeBrands();
+      const result = await client.getPetaCrueltyFreeBrands();
       expect(result.PETA_DOES_NOT_TEST).toHaveLength(0);
     });
 
@@ -57,15 +49,17 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: ["Brand1"],
       };
 
-      globalThis.fetch = mockFetch().mockResolvedValueOnce({
+      const fetchMock = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       });
 
-      await veganify.getPetaCrueltyFreeBrands();
-      await veganify.getPetaCrueltyFreeBrands();
+      const client = createVeganify({ staging: true, fetch: fetchMock });
 
-      expect(fetch).toHaveBeenCalledTimes(1);
+      await client.getPetaCrueltyFreeBrands();
+      await client.getPetaCrueltyFreeBrands();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it("should handle malformed responses", async () => {
@@ -77,12 +71,15 @@ describe("Veganify PETA Brands", () => {
       ];
 
       for (const response of malformedResponses) {
-        globalThis.fetch = mockFetch().mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(response),
+        const client = createVeganify({
+          staging: true,
+          fetch: mockFetch().mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve(response),
+          }),
         });
 
-        await expect(veganify.getPetaCrueltyFreeBrands()).rejects.toThrow(
+        await expect(client.getPetaCrueltyFreeBrands()).rejects.toThrow(
           ValidationError,
         );
       }
