@@ -1,4 +1,8 @@
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { mockFetch } from "./helpers/mock-fetch";
 import Veganify, { ValidationError } from "../lib";
+
+const originalFetch = globalThis.fetch;
 
 describe("Veganify PETA Brands", () => {
   let veganify: Veganify;
@@ -6,7 +10,11 @@ describe("Veganify PETA Brands", () => {
   beforeEach(() => {
     veganify = Veganify.getInstance({ staging: true });
     veganify.clearCache();
-    jest.clearAllMocks();
+    mock.clearAllMocks();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   describe("getPetaCrueltyFreeBrands", () => {
@@ -17,7 +25,7 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: ["Brand1", "Brand2"],
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -33,7 +41,7 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: [],
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -49,7 +57,7 @@ describe("Veganify PETA Brands", () => {
         PETA_DOES_NOT_TEST: ["Brand1"],
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -69,13 +77,13 @@ describe("Veganify PETA Brands", () => {
       ];
 
       for (const response of malformedResponses) {
-        global.fetch = jest.fn().mockResolvedValueOnce({
+        globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
           json: async () => response,
         });
 
         await expect(veganify.getPetaCrueltyFreeBrands()).rejects.toThrow(
-          ValidationError
+          ValidationError,
         );
       }
     });

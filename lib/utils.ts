@@ -14,7 +14,10 @@ export class Cache<T> {
    * @param maxSize Maximum number of entries before the least-recently-used
    *   entry is evicted. @default 500
    */
-  constructor(ttlMs: number = 1_800_000, private maxSize: number = 500) {
+  constructor(
+    ttlMs: number = 1_800_000,
+    private maxSize: number = 500,
+  ) {
     this.cache = new Map();
     this.ttl = ttlMs;
     this.enabled = ttlMs > 0;

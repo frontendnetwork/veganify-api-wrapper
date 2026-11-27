@@ -6,7 +6,7 @@
 A modern, type-safe wrapper for the official [Veganify API](https://github.com/frontendnetwork/Veganify-API) with built-in validation, caching, and comprehensive error handling.
 
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Testing](https://img.shields.io/badge/tested_with-jest-green.svg?style=for-the-badge)
+![Testing](https://img.shields.io/badge/tested_with-bun-green.svg?style=for-the-badge)
 ![NPM Version](https://img.shields.io/npm/v/@frontendnetwork/veganify.svg?style=for-the-badge)
 
 </div>
@@ -34,6 +34,9 @@ yarn add @frontendnetwork/veganify
 
 # Using pnpm
 pnpm add @frontendnetwork/veganify
+
+# Using bun
+bun add @frontendnetwork/veganify
 ```
 
 ## Quick Start
@@ -62,19 +65,19 @@ async function checkIngredients() {
 
 ```typescript
 interface VeganifyConfig {
-  baseUrl?: string;      // Override the API base URL entirely
-  cacheTTL?: number;     // Cache TTL in ms (0 or negative = disabled). Default: 1 800 000 (30 min)
-  staging?: boolean;     // Point requests at the staging API
-  timeout?: number;      // Request timeout in ms. Default: 10 000 (10 s)
+  baseUrl?: string; // Override the API base URL entirely
+  cacheTTL?: number; // Cache TTL in ms (0 or negative = disabled). Default: 1 800 000 (30 min)
+  staging?: boolean; // Point requests at the staging API
+  timeout?: number; // Request timeout in ms. Default: 10 000 (10 s)
   cacheMaxSize?: number; // Max entries per cache bucket before LRU eviction. Default: 500
 }
 
 // Example: Configure with custom settings
 const veganify = Veganify.getInstance({
-  cacheTTL: 3600000,   // 1 hour cache
-  staging: true,       // Use staging environment
-  timeout: 5000,       // Abort requests after 5 s
-  cacheMaxSize: 200,   // Keep at most 200 entries per cache
+  cacheTTL: 3600000, // 1 hour cache
+  staging: true, // Use staging environment
+  timeout: 5000, // Abort requests after 5 s
+  cacheMaxSize: 200, // Keep at most 200 entries per cache
 });
 ```
 
@@ -223,11 +226,11 @@ try {
 
 The package provides three custom error classes. All extend `VeganifyError` which extends the native `Error`:
 
-| Class | `statusCode` | When thrown |
-|---|---|---|
-| `VeganifyError` | varies | Base class; also thrown for HTTP errors, timeouts (408) |
-| `ValidationError` | 400 | Malformed barcode, empty ingredients, invalid response schema |
-| `NotFoundError` | 404 | Product or resource not found |
+| Class             | `statusCode` | When thrown                                                   |
+| ----------------- | ------------ | ------------------------------------------------------------- |
+| `VeganifyError`   | varies       | Base class; also thrown for HTTP errors, timeouts (408)       |
+| `ValidationError` | 400          | Malformed barcode, empty ingredients, invalid response schema |
+| `NotFoundError`   | 404          | Product or resource not found                                 |
 
 The `error.cause` property is set on all errors (native `Error.cause` chaining):
 
@@ -377,8 +380,8 @@ The package includes a built-in TTL + LRU cache. Each API method (product, ingre
 
 ```typescript
 const veganify = Veganify.getInstance({
-  cacheTTL: 1800000,  // 30 minutes TTL (set to 0 to disable)
-  cacheMaxSize: 200,  // Evict least-recently-used entry when > 200 items
+  cacheTTL: 1800000, // 30 minutes TTL (set to 0 to disable)
+  cacheMaxSize: 200, // Evict least-recently-used entry when > 200 items
 });
 
 // Clear all cache buckets at any time
@@ -438,7 +441,7 @@ An array of cleaned and normalized ingredient names
 import { preprocessIngredients } from "@frontendnetwork/veganify";
 
 const cleanIngredients = preprocessIngredients(
-  "water 100%, sugar (organic), salt:"
+  "water 100%, sugar (organic), salt:",
 );
 // Result: ['water', 'sugar', 'organic', 'salt']
 ```

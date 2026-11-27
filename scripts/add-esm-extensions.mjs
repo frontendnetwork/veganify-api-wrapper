@@ -19,7 +19,7 @@ function fixExtensions(dir) {
       (match, keyword, q1, p, q2) => {
         if (/\.[cm]?js$/.test(p)) return match;
         return `${keyword}${q1}${p}.js${q2}`;
-      }
+      },
     );
     writeFileSync(fp, src);
   }

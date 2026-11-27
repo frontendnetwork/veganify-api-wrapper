@@ -1,4 +1,8 @@
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { mockFetch } from "./helpers/mock-fetch";
 import Veganify, { ValidationError } from "../lib";
+
+const originalFetch = globalThis.fetch;
 
 describe("Veganify Ingredients Analysis", () => {
   let veganify: Veganify;
@@ -7,10 +11,11 @@ describe("Veganify Ingredients Analysis", () => {
     Veganify.resetInstance();
     veganify = Veganify.getInstance({ staging: true });
     veganify.clearCache();
-    jest.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
     Veganify.resetInstance();
   });
 
@@ -29,7 +34,7 @@ describe("Veganify Ingredients Analysis", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -40,7 +45,7 @@ describe("Veganify Ingredients Analysis", () => {
 
     it("should throw ValidationError for empty ingredients", async () => {
       await expect(veganify.checkIngredientsListV1("")).rejects.toThrow(
-        ValidationError
+        ValidationError,
       );
     });
 
@@ -71,7 +76,7 @@ describe("Veganify Ingredients Analysis", () => {
           },
         };
 
-        global.fetch = jest.fn().mockResolvedValueOnce({
+        globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
           json: async () => mockResponse,
         });
@@ -103,7 +108,7 @@ describe("Veganify Ingredients Analysis", () => {
       ];
 
       for (const input of specialCharCases) {
-        global.fetch = jest.fn().mockResolvedValueOnce({
+        globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
           json: async () => mockResponse,
         });
@@ -122,13 +127,13 @@ describe("Veganify Ingredients Analysis", () => {
       ];
 
       for (const response of malformedResponses) {
-        global.fetch = jest.fn().mockResolvedValueOnce({
+        globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: true,
           json: async () => response,
         });
 
         await expect(
-          veganify.checkIngredientsListV1("water,sugar")
+          veganify.checkIngredientsListV1("water,sugar"),
         ).rejects.toThrow(ValidationError);
       }
     });
@@ -147,7 +152,7 @@ describe("Veganify Ingredients Analysis", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValue({
+      globalThis.fetch = mockFetch().mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
       });
@@ -172,7 +177,7 @@ describe("Veganify Ingredients Analysis", () => {
       };
 
       let capturedUrl = "";
-      global.fetch = jest.fn().mockImplementation((url: string) => {
+      globalThis.fetch = mockFetch().mockImplementation((url: string) => {
         capturedUrl = url;
         return Promise.resolve({ ok: true, json: async () => mockResponse });
       });

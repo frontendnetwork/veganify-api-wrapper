@@ -1,9 +1,10 @@
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import Veganify from "../lib";
 
 describe("Veganify Instance Management", () => {
   beforeEach(() => {
     Veganify.resetInstance();
-    jest.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   afterEach(() => {

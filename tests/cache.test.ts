@@ -1,5 +1,9 @@
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { mockFetch } from "./helpers/mock-fetch";
 import Veganify from "../lib";
 import { Cache } from "../lib/utils";
+
+const originalFetch = globalThis.fetch;
 
 const mockProduct = {
   status: 200,
@@ -10,18 +14,18 @@ const mockProduct = {
 describe("Veganify Cache Behavior", () => {
   beforeEach(() => {
     Veganify.resetInstance();
-    jest.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
     Veganify.resetInstance();
   });
 
   it("should disable cache when TTL is 0", async () => {
     const veganifyNoCache = Veganify.getInstance({ cacheTTL: 0 });
 
-    global.fetch = jest
-      .fn()
+    globalThis.fetch = mockFetch()
       .mockResolvedValueOnce({ ok: true, json: async () => mockProduct })
       .mockResolvedValueOnce({ ok: true, json: async () => mockProduct });
 
@@ -34,8 +38,7 @@ describe("Veganify Cache Behavior", () => {
   it("should disable cache when TTL is negative", async () => {
     const veganifyNoCache = Veganify.getInstance({ cacheTTL: -1 });
 
-    global.fetch = jest
-      .fn()
+    globalThis.fetch = mockFetch()
       .mockResolvedValueOnce({ ok: true, json: async () => mockProduct })
       .mockResolvedValueOnce({ ok: true, json: async () => mockProduct });
 
@@ -48,7 +51,7 @@ describe("Veganify Cache Behavior", () => {
   it("should expire cache after TTL", async () => {
     const veganifyShortCache = Veganify.getInstance({ cacheTTL: 100 }); // 100ms TTL
 
-    global.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = mockFetch().mockResolvedValue({
       ok: true,
       json: async () => mockProduct,
     });
@@ -66,7 +69,7 @@ describe("Veganify Cache Behavior", () => {
   it("should handle cache clear", async () => {
     const veganify = Veganify.getInstance({ cacheTTL: 1000 });
 
-    global.fetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = mockFetch().mockResolvedValue({
       ok: true,
       json: async () => mockProduct,
     });

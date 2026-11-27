@@ -1,8 +1,13 @@
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { mockFetch } from "./helpers/mock-fetch";
 import Veganify, {
   ValidationError,
   NotFoundError,
   VeganifyError,
+  type ProductResponse,
 } from "../lib";
+
+const originalFetch = globalThis.fetch;
 
 describe("Veganify Product Lookup", () => {
   let veganify: Veganify;
@@ -10,12 +15,16 @@ describe("Veganify Product Lookup", () => {
   beforeEach(() => {
     veganify = Veganify.getInstance({ staging: true });
     veganify.clearCache();
-    jest.clearAllMocks();
+    mock.clearAllMocks();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   describe("getProductByBarcode", () => {
     it("should fetch product information successfully", async () => {
-      const mockProduct = {
+      const mockProduct: ProductResponse = {
         status: 200,
         product: {
           productname: "Test Product",
@@ -28,7 +37,7 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockProduct,
       });
@@ -38,7 +47,7 @@ describe("Veganify Product Lookup", () => {
     });
 
     it("should handle product with all possible fields", async () => {
-      const mockProduct = {
+      const mockProduct: ProductResponse = {
         status: 200,
         product: {
           productname: "Complete Product",
@@ -57,7 +66,7 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockProduct,
       });
@@ -67,7 +76,7 @@ describe("Veganify Product Lookup", () => {
     });
 
     it("should handle product with minimal fields", async () => {
-      const mockProduct = {
+      const mockProduct: ProductResponse = {
         status: 200,
         product: {
           productname: "Minimal Product",
@@ -79,7 +88,7 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockProduct,
       });
@@ -89,26 +98,26 @@ describe("Veganify Product Lookup", () => {
     });
 
     it("should handle various barcode formats", async () => {
-      const mockProduct = {
+      const mockProduct: ProductResponse = {
         status: 200,
         product: { productname: "Test" },
         sources: { processed: true, api: "test", baseuri: "test" },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockProduct,
       });
 
       await expect(veganify.getProductByBarcode("123")).resolves.toBeDefined();
       await expect(veganify.getProductByBarcode("abc")).rejects.toThrow(
-        ValidationError
+        ValidationError,
       );
       await expect(veganify.getProductByBarcode("12.34")).rejects.toThrow(
-        ValidationError
+        ValidationError,
       );
       await expect(veganify.getProductByBarcode("")).rejects.toThrow(
-        ValidationError
+        ValidationError,
       );
     });
 
@@ -121,29 +130,29 @@ describe("Veganify Product Lookup", () => {
       ];
 
       for (const { status, error } of errorCases) {
-        global.fetch = jest.fn().mockResolvedValueOnce({
+        globalThis.fetch = mockFetch().mockResolvedValueOnce({
           ok: false,
           status,
         });
 
         await expect(
-          veganify.getProductByBarcode("4066600204404")
+          veganify.getProductByBarcode("4066600204404"),
         ).rejects.toThrow(error);
       }
     });
 
     it("should handle network errors", async () => {
-      global.fetch = jest
-        .fn()
-        .mockRejectedValueOnce(new Error("Network error"));
+      globalThis.fetch = mockFetch().mockRejectedValueOnce(
+        new Error("Network error"),
+      );
 
       await expect(
-        veganify.getProductByBarcode("4066600204404")
+        veganify.getProductByBarcode("4066600204404"),
       ).rejects.toThrow("Network error");
     });
 
     it("should handle invalid JSON responses", async () => {
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => {
           throw new Error("Invalid JSON");
@@ -151,29 +160,29 @@ describe("Veganify Product Lookup", () => {
       });
 
       await expect(
-        veganify.getProductByBarcode("4066600204404")
+        veganify.getProductByBarcode("4066600204404"),
       ).rejects.toThrow();
     });
 
     it("should throw ValidationError for invalid barcode", async () => {
       await expect(veganify.getProductByBarcode("invalid")).rejects.toThrow(
-        ValidationError
+        ValidationError,
       );
     });
 
     it("should throw NotFoundError for non-existent product", async () => {
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: false,
         status: 404,
       });
 
       await expect(
-        veganify.getProductByBarcode("0000000000000")
+        veganify.getProductByBarcode("0000000000000"),
       ).rejects.toThrow(NotFoundError);
     });
 
     it("should use cache for subsequent requests", async () => {
-      const mockProduct = {
+      const mockProduct: ProductResponse = {
         status: 200,
         product: {
           productname: "Test Product",
@@ -186,7 +195,7 @@ describe("Veganify Product Lookup", () => {
         },
       };
 
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      globalThis.fetch = mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockProduct,
       });

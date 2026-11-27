@@ -8,26 +8,18 @@ on:
 jobs:
   install:
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: commit tests
       url: https://github.com/JokeNetwork/veganify-api-wrapper
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22.x'
+          bun-version: latest
 
-      - name: Cache node modules
-        uses: actions/cache@v6
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
   test:
     needs: install
@@ -36,17 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22.x'
+          bun-version: latest
 
-      - name: Cache node modules
-        uses: actions/cache@v6
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - run: npm ci
-      - run: npm test
+      - run: bun install --frozen-lockfile
+      - run: bun test

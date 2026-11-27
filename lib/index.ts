@@ -112,7 +112,7 @@ class Veganify {
   private async fetchWithValidation<T>(
     url: string,
     schema: z.ZodType<T>,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
@@ -136,7 +136,7 @@ class Veganify {
           default:
             throw new VeganifyError(
               `HTTP error ${response.status}`,
-              response.status
+              response.status,
             );
         }
       }
@@ -201,7 +201,7 @@ class Veganify {
    */
   async checkIngredientsListV1(
     ingredientsList: string,
-    preprocessed: boolean = true
+    preprocessed: boolean = true,
   ): Promise<IngredientsCheckResponseV1> {
     const ingredients = preprocessed
       ? preprocessIngredients(ingredientsList)
@@ -218,7 +218,7 @@ class Veganify {
     const url = `${this.baseUrl}/v1/ingredients/${encodeURIComponent(ingredientsString)}`;
     const result = await this.fetchWithValidation(
       url,
-      IngredientsCheckResponseV1Schema
+      IngredientsCheckResponseV1Schema,
     );
 
     this.ingredientsCache.set(cacheKey, result);
@@ -239,7 +239,7 @@ class Veganify {
     const url = `${this.baseUrl}/v0/peta/crueltyfree`;
     const result = await this.fetchWithValidation(
       url,
-      PetaCrueltyFreeResponseSchema
+      PetaCrueltyFreeResponseSchema,
     );
 
     this.petaCache.set(cacheKey, result);

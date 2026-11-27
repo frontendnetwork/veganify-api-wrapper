@@ -1,3 +1,4 @@
+import { describe, it, expect } from "bun:test";
 import { preprocessIngredients } from "../lib";
 
 describe("preprocessIngredients", () => {
@@ -76,7 +77,7 @@ describe("preprocessIngredients", () => {
     const invalidInputs = [undefined, null, 123, {}, [], new Date()];
     invalidInputs.forEach((input) => {
       expect(
-        (preprocessIngredients as (i: unknown) => string[])(input)
+        (preprocessIngredients as (i: unknown) => string[])(input),
       ).toEqual([]);
     });
   });
