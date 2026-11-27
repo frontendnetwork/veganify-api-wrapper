@@ -497,6 +497,8 @@ bun run build    # tsdown build (ESM + CJS + .d.ts), runs publint and attw
 bun test         # run the test suite
 ```
 
+Pull request titles must follow [Conventional Commits](https://www.conventionalcommits.org) (`fix:`, `feat:`, `chore:`, …) — CI enforces this, and releases are derived from the titles. Every PR is squash-merged, so the PR title becomes the commit message on `main`.
+
 Note for anyone deep-importing build output: the `dist/` layout changed — builds are now flat (`dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`, `dist/index.d.cts`). Deep imports were never exposed through the `exports` map anyway; use the package entry point.
 
 ## Contributing
